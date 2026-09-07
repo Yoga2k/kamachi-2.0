@@ -1,0 +1,6 @@
+[console_scripts]
+focus = focus.terminal_commands:run_focus_session
+focus-day = focus.terminal_commands:run_focus_day
+focus-session = focus.terminal_commands:run_focus_session
+focus-time = focus.terminal_commands:run_focus_session
+

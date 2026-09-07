@@ -1,0 +1,34 @@
+# --- Voice / Text-to-Speech ---
+pyttsx3
+SpeechRecognition
+pywin32          # win32com.client used in utils.py (Windows only)
+
+# --- Audio input (required by speech_recognition for microphone access) ---
+PyAudio
+
+# --- Entertainment / Media ---
+pywhatkit
+
+# --- Location & Translation ---
+geopy
+deep-translator   # advanced_features.py uses deep_translator, NOT googletrans
+
+# --- Web / Networking ---
+requests
+beautifulsoup4
+googlesearch-python   # web.py: "from googlesearch import search"
+
+# --- System Control ---
+screen-brightness-control
+psutil
+pyautogui
+plyer
+pywinauto         # call.py, alarm_manager.py (Windows UI automation)
+
+# --- Math ---
+sympy
+
+# --- Desktop avatar widget ---
+PyQt5
+
+# --- Notifications (already listed above via plyer) ---
