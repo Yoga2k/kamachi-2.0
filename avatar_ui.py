@@ -302,6 +302,41 @@ class AvatarWidget(QtWidgets.QWidget):
         """Starts the ~1.4s wave/bounce greeting animation."""
         self._greet_frames_left = 35
 
+    def contextMenuEvent(self, event):
+        """Right-click context menu to stop/close KAMACHI."""
+        menu = QtWidgets.QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #1e1e2e;
+                color: #ffffff;
+                border: 1px solid #45475a;
+                border-radius: 8px;
+                padding: 6px;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 12px;
+            }
+            QMenu::item {
+                padding: 6px 20px;
+                border-radius: 4px;
+            }
+            QMenu::item:selected {
+                background-color: #e06c75;
+                color: #ffffff;
+            }
+        """)
+        close_action = menu.addAction("❌ Close / Stop KAMACHI")
+        action = menu.exec_(self.mapToGlobal(event.pos()))
+        if action == close_action:
+            import os
+            os._exit(0)
+
+    def keyPressEvent(self, event):
+        """Allow pressing Escape to close KAMACHI."""
+        if event.key() == QtCore.Qt.Key_Escape:
+            import os
+            os._exit(0)
+        super().keyPressEvent(event)
+
 
 # ------------------------------------------------------------------
 # Public API — same shape as before, so utils.py and run_with_avatar.py

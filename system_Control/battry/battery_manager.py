@@ -75,6 +75,6 @@ def battery_status():
         return {"percent": percent, "plugged": plugged}
 
     else:
-        speak("Battery information is not available on this system.")
-        return None
+        speak("Battery information is not available. This computer is running on direct AC power.")
+        return {"percent": 100, "plugged": True, "type": "ac_power"}
 

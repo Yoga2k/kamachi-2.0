@@ -84,30 +84,24 @@ def set_alarm_clock_app(alarm_time, timeout=12):
     if not UI_AUTOMATION_AVAILABLE:
         return "Clock-app automation is not available (pywinauto not installed)."
 
-    # Try common Desktop shortcut locations (user provided path included)
+    # Try standard Windows URI protocol or dynamic desktop shortcut
     launched = False
-    candidate_shortcuts = [
-        Path(r"C:\Users\yogan\OneDrive\Desktop\Clock - Shortcut.lnk"),
-        Path.home() / "OneDrive" / "Desktop" / "Clock - Shortcut.lnk",
-        Path.home() / "Desktop" / "Clock - Shortcut.lnk",
-    ]
-    for lnk in candidate_shortcuts:
+    try:
+        subprocess.Popen(["cmd.exe", "/c", "start ms-clock:"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        launched = True
+    except Exception:
         try:
-            if lnk.exists():
-                try:
-                    os.startfile(str(lnk))
-                    launched = True
-                    break
-                except Exception:
-                    # try next candidate or fall back to explorer shell method
-                    launched = False
+            import config
+            lnk = config.find_desktop_shortcut("Clock")
+            if lnk and Path(lnk).exists():
+                os.startfile(lnk)
+                launched = True
         except Exception:
-            continue
+            launched = False
 
-    # If shortcut wasn't launched, fall back to launching the app via explorer shell
+    # If not launched yet, fall back to launching via shell:appsFolder
     if not launched:
         try:
-            # Launch Windows Clock (Alarms & Clock)
             subprocess.Popen(["explorer.exe", "shell:appsFolder\\Microsoft.WindowsAlarms_8wekyb3d8bbwe!App"])
         except Exception as e:
             return f"Failed to launch Clock app: {e}"

@@ -3,15 +3,19 @@ from pywinauto.keyboard import send_keys
 import subprocess
 import time
 from utils import speak, take_command
+import config
 
 def open_phone_link(timeout=12):
     """Launch Phone Link (Your Phone) and return a window wrapper or None."""
     speak("Opening Phone Link app...")
     try:
-        subprocess.Popen(["explorer.exe", "shell:appsFolder\\Microsoft.YourPhone_8wekyb3d8bbwe!App"])
-    except Exception as e:
-        speak(f"Failed to launch Phone Link: {e}")
-        return None
+        subprocess.Popen(["cmd.exe", "/c", "start ms-yourphone:"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        try:
+            subprocess.Popen(["explorer.exe", "shell:appsFolder\\Microsoft.YourPhone_8wekyb3d8bbwe!App"])
+        except Exception as e:
+            speak(f"Failed to launch Phone Link: {e}")
+            return None
 
     desktop = Desktop(backend="uia")
     deadline = time.time() + timeout
@@ -38,8 +42,10 @@ def open_phone_link(timeout=12):
     speak("Could not find the Phone Link window. Please open it manually and try again.")
     return None
 
-def call_contact(contact_name="Amma"):
+def call_contact(contact_name=None):
     """Search and call a contact inside Phone Link. Best-effort UI automation."""
+    if not contact_name:
+        contact_name = config.get_config("default_call_contact", "Amma")
     window = open_phone_link()
     if window is None:
         return False

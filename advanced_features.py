@@ -23,7 +23,7 @@ def advanced_features(command):
     elif "translate" in command:
         dynamic_translate()  # Improved dynamic translation function
 
-    elif "find my location" in command or "where am I" in command:
+    elif any(k in command for k in ["find my location", "where am i", "my location", "current location", "where am i right now"]):
         get_current_location()
 
     elif "what's the weather" in command or "current weather" in command:
@@ -41,44 +41,48 @@ def dynamic_translate():
         return
 
     try:
-        translation = translator.translate(phrase_to_translate, target=target_language)
+        translator = GoogleTranslator(source='auto', target=target_language)
+        translation = translator.translate(phrase_to_translate)
         speak(f"The translation of '{phrase_to_translate}' in {target_language} is: {translation}")
         print(f"Original: {phrase_to_translate}\nTranslated ({target_language}): {translation}")
     except Exception as e:
         speak(f"Translation failed: {e}")
         print(f"❌ Translation Error: {e}")
 
-def get_current_location():
-    """Fetch location using online API with offline fallback."""
-    speak("Fetching your location...")
-    
+def get_current_location(open_map=True):
+    """Fetch live location using reliable IP geolocation and display on map."""
+    speak("Detecting your current location...")
     try:
-        response = requests.get("https://ipinfo.io/json", timeout=5)
-        data = response.json()
+        response = requests.get("https://ipinfo.io/json", timeout=6)
+        if response.status_code == 200:
+            data = response.json()
+            city = data.get("city", "")
+            region = data.get("region", "")
+            country = data.get("country", "")
+            postal = data.get("postal", "")
+            loc = data.get("loc", "")
 
-        if "loc" in data:
-            lat, lng = map(float, data["loc"].split(","))
-            geolocator = Nominatim(user_agent="zenai_location")
-            address = geolocator.reverse((lat, lng), language='en').address
-            speak(f"Your location is {address}")
-            print(f"📍 Location Detected: {address}")
-            return address.split(",")[0]
+            location_parts = [p for p in [city, region, country] if p]
+            location_name = ", ".join(location_parts) if location_parts else "India"
 
+            msg = f"Your current location is {location_name}"
+            if postal:
+                msg += f", postal code {postal}."
+            else:
+                msg += "."
+            print(f"Location Detected: {msg}")
+            speak(msg)
+
+            if open_map and loc:
+                import webbrowser
+                webbrowser.open(f"https://www.google.com/maps?q={loc}")
+
+            return city or location_name
     except Exception as e:
-        speak("Live location not found. Using offline method...")
-        print(f"❌ Location Fetch Error: {e}")
+        print(f"Location Fetch Error: {e}")
 
-        try:
-            geolocator = Nominatim(user_agent="zenai_location")
-            location = geolocator.geocode("India")  # Default fallback
-            if location:
-                speak(f"Using offline location: {location.address}")
-                print(f"📍 Offline Location Used: {location.address}")
-                return location.address.split(",")[0]
-        except:
-            speak("Location services are not available.")
-            print("❌ Location services unavailable.")
-            return None
+    speak("Unable to detect live location right now. Please check your internet connection.")
+    return None
 
 def get_weather():
     """Fetch real-time weather using WeatherAPI.com."""

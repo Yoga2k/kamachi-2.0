@@ -1,0 +1,10 @@
+{
+  "user_name": "Mr. Yoga",
+  "assistant_name": "KAMACHI",
+  "version": "3.0",
+  "default_call_contact": "Amma",
+  "weather_city": "Gudiyatham, Vellore",
+  "speech_rate": 150,
+  "speech_volume": 1.0,
+  "default_input_mode": "voice"
+}

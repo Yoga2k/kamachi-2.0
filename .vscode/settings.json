@@ -1,4 +1,5 @@
 {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "CodeGPT.apiKey": "Anthropic"
+    "CodeGPT.apiKey": "Anthropic",
+    "python.defaultInterpreterPath": "C:\\Users\\yogan\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
 }

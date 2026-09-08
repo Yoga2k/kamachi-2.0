@@ -4,12 +4,15 @@ from utils import speak, take_command, choose_input_mode,change_voice
 from web import web_and_online_features
 from advanced_features import advanced_features
 from productivity import productivity_features
-from code_konw import programming_help
-from Education.social import tamil_nadu_info
+from Education.coding_assist import programming_help
+from Education.social import tamil_nadu_info, andhra_pradesh_info
 from Education.table import generate_table
 from Education.math_operations import calculate_expression
 from system_Control.app import app_application
-from system_Control.system_setting import process_command
+from system_Control.system_setting import (
+    process_command, ram_status, cpu_status, disk_status, system_summary,
+    check_virus_status, install_software, uninstall_software, open_store, list_installed_apps
+)
 from system_Control.voice_typing import voice_to_text
 from system_Control.screenshot_control import take_screenshot
 from system_Control.wifis.wifi_manager import (
@@ -23,6 +26,7 @@ from news.voice_news import voice_news_control
 from news.sports_news.voice_sports import voice_sports_control
 from news.precious_metal.voice_precious_metal import voice_metal_control
 from system_Control.nearby.voice_nearby import voice_nearby_control
+from system_Control.hands_free_control import handle_hands_free
 
 # Optional features with fallback handling
 try:
@@ -87,30 +91,53 @@ def kamachi_3_0():
     print("Hello! I am KAMACHI 3.0 with ZenAI features. How can I assist you today?")
 
     while True:
-        speak("Listening for your command...")
-        print("Listening for your command...")
-
         command = take_command()
 
         if not command or not command.strip():
-            speak("I didn’t catch that. Can you repeat?")
+            # Silently keep listening without interrupting with repetitive speech
             continue
 
         command = command.strip().lower()
 
-        # Exit condition
-        if "exit" in command or "quit" in command or "bye" in command:
-            speak("Goodbye! Have a great day!")
-            break
+        # Exit / Stop / Close condition
+        if any(k in command for k in [
+            "stop kamachi", "close kamachi", "exit kamachi", "quit kamachi",
+            "close the app", "stop the app", "close app", "stop app",
+            "close assistant", "stop assistant", "shutdown kamachi", "shut down kamachi",
+            "turn off kamachi", "stop", "exit", "quit", "bye", "goodbye"
+        ]):
+            speak("Goodbye! Shutting down KAMACHI.")
+            import os
+            os._exit(0)
 
         # -----------------------------
-        # SYSTEM CONTROL
+        # 100% HANDS-FREE PC CONTROL (Mouse, Scrolling, Typing, Tabs, Windows)
+        # -----------------------------
+        if handle_hands_free(command):
+            continue
+
+        # -----------------------------
+        # SYSTEM CONTROL, HARDWARE DIAGNOSTICS & APP INSTALLER
         # -----------------------------
         if match_command(command, {
-            "decrease the brightness","refresh pc","display settings","start menu","shutdown","network settings","increase the brightness","run", "sleep", "shutdown", "restart", "increase volume",
-            "decrease volume", "increase brightness", "decrease brightness",
-            "refresh", "connect wifi", "turn on bluetooth", "connect vpn","storage settings","multitasking settings","power settings","troubleshoot settings",
-            "start screencast", "change language", "open control panel", "open settings"
+            "ram", "memory status", "memory usage", "cpu", "processor",
+            "disk space", "storage space", "free space", "system summary", "specs",
+            "battery", "power status", "decrease the brightness", "refresh pc", "display settings",
+            "start menu", "shutdown", "network settings", "network and internet", "network", "internet",
+            "wifi settings", "hotspot", "mobile hotspot", "airplane mode", "flight mode", "ethernet",
+            "vpn", "proxy", "data usage", "increase the brightness", "run", "sleep",
+            "restart", "increase volume", "decrease volume", "increase brightness", "decrease brightness",
+            "refresh", "turn on bluetooth", "bluetooth", "storage settings",
+            "multitasking settings", "power settings", "troubleshoot", "troubleshooter", "troubleshoot settings", "notifications settings",
+            "date and time", "time settings", "personalization", "wallpaper", "background settings", "change wallpaper",
+            "lock screen", "fonts", "themes", "dark mode", "color settings", "gaming settings", "privacy settings",
+            "update settings", "windows update", "mouse settings", "touchpad", "taskbar", "default apps",
+            "apps settings", "app settings", "advance app", "advanced app", "offline maps", "apps for websites",
+            "video playback", "startup apps", "optional features", "action center", "actions", "quick actions",
+            "about pc", "system info", "open control panel", "control panel", "task manager",
+            "device manager", "open settings", "settings", "install", "download app", "uninstall",
+            "installed apps", "microsoft store", "virus", "varies", "scan virus", "scan for virus",
+            "find virus", "auto find virus", "antivirus", "malware", "threats"
         }):
             process_command(command)
 
@@ -143,10 +170,13 @@ def kamachi_3_0():
             speak(result)
 
         # -----------------------------
-        # TAMIL NADU INFO
+        # TAMIL NADU & ANDHRA PRADESH INFO
         # -----------------------------
         elif "tamil nadu" in command:
             answer = tamil_nadu_info(command)
+            speak(answer)
+        elif "andhra pradesh" in command or "andhra" in command:
+            answer = andhra_pradesh_info(command)
             speak(answer)
         
         # -----------------------------
@@ -214,7 +244,8 @@ def kamachi_3_0():
         # ADVANCED FEATURES
         # -----------------------------
         elif match_command(command, {
-            "current weather","where am I","find my location" ,"translate"
+            "current weather", "what's the weather", "where am i", "find my location",
+            "my location", "current location", "where is my pc", "translate"
         }):
             advanced_features(command)
 
@@ -284,16 +315,17 @@ def kamachi_3_0():
             change_voice(command)
 
         # -----------------------------
-        # BATTERY STATUS
+        # BATTERY & RAM STATUS
         # -----------------------------
         elif match_command(command, {"battery", "power status"}):
             battery_status()
+        elif match_command(command, {"ram", "ram status", "ram usage", "memory usage", "memory status"}):
+            ram_status()
 
         # -----------------------------
         # DEFAULT / CHAT MODE
         # -----------------------------
         else:
-            match_command(command,{"play"})
             handle_command(command)
 
 

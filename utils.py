@@ -154,7 +154,22 @@ def temp_input_typing(prompt=None):
 
 
 def choose_input_mode():
-    """Ask user whether to use Text (T) or Voice (V) input."""
+    """Configure input mode (Voice or Text). If configured as 'voice', starts hands-free immediately without blocking on keyboard."""
+    try:
+        import config
+        default_mode = config.get_config("default_input_mode", "voice").lower()
+    except Exception:
+        default_mode = "voice"
+
+    if default_mode == "voice":
+        disable_temporary_typing()
+        speak("Voice mode activated. Hands-free listening started.")
+        return "voice"
+    elif default_mode == "text":
+        enable_temporary_typing()
+        speak("Text input mode enabled.")
+        return "text"
+
     try:
         speak("You can use voice input or text input. Press T for text mode or V for voice mode.")
     except Exception:
@@ -215,12 +230,15 @@ def take_command(prompt=None, max_retries=3):
                     return command
                 except sr.UnknownValueError:
                     retries += 1
-                    speak("Sorry, I didn't catch that. Please say it again.")
+                    if prompt:
+                        speak("Sorry, I didn't catch that. Please say it again.")
                     if _HAS_AVATAR_UI:
                         avatar_ui.notify_status("listening")
                 except sr.WaitTimeoutError:
                     retries += 1
-                    speak("Listening timed out. Try again.")
+                    # Ambient silence is normal — keep listening silently
+                    if prompt and retries >= max_retries:
+                        speak("Listening timed out.")
                     if _HAS_AVATAR_UI:
                         avatar_ui.notify_status("listening")
                 except sr.RequestError:

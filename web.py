@@ -4,6 +4,7 @@ import os
 from utils import speak, take_command
 from bs4 import BeautifulSoup
 from googlesearch import search
+import config
 
 # Common website shortcuts
 WEBSITE_SHORTCUTS = {
@@ -24,8 +25,9 @@ def web_and_online_features(command):
     try:
         # 🌤️ Weather
         if "tell today weather" in command or "today weather" in command:
-            speak("Fetching today's weather for Gudiyatham, Vellore...")
-            url = "https://www.google.com/search?q=weather+Gudiyatham+Vellore"
+            city = config.get_config("weather_city", "Gudiyatham, Vellore")
+            speak(f"Fetching today's weather for {city}...")
+            url = f"https://www.google.com/search?q=weather+{city.replace(' ', '+')}"
             webbrowser.open(url)
             try:
                 response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -91,8 +93,13 @@ def web_and_online_features(command):
 
         # ❌ Close Browser
         elif "close web" in command or "close browser" in command or "closing google" in command:
-            speak("Closing all browser windows.")
-            os.system("taskkill /IM chrome.exe /F")
+            speak("Are you sure you want to close your browser windows? Say yes to confirm.")
+            confirm = take_command("Say 'yes' to close browser:")
+            if confirm and "yes" in confirm.lower():
+                speak("Closing browser windows.")
+                os.system("taskkill /IM chrome.exe /IM msedge.exe")
+            else:
+                speak("Browser closure cancelled.")
 
         # ✅ Check Website Availability
         elif "check website" in command or "check site" in command:
@@ -168,7 +175,11 @@ def play_first_youtube_video(query):
         try:
             results = list(search(search_query, num_results=1))
         except TypeError:
-            results = list(search(search_query, stop=1))
+            try:
+                legacy_kw = {"stop": 1}
+                results = list(search(search_query, **legacy_kw))
+            except Exception:
+                results = [r for idx, r in enumerate(search(search_query)) if idx < 1]
         if results:
             speak(f"Opening the top YouTube result for {query}")
             webbrowser.open(results[0])

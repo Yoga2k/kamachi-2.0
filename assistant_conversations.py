@@ -8,8 +8,10 @@ import pywhatkit
 # Import voice functions
 from utils import speak, take_command
 
+import config
+
 # User name
-user_name = "Mr. Yoga"
+user_name = config.get_config("user_name", "Mr. Yoga")
 
 # -------------------- Greeting -------------------- #
 def basic_greeting(command):
@@ -171,13 +173,16 @@ def entertainment_requests(command):
 # -------------------- Personal Info -------------------- #
 def what_is_your_name(command):
     if "your name" in command.lower():
-        speak("My name is KAMACHI 2 point O.")
+        name = config.get_config("assistant_name", "KAMACHI")
+        version = config.get_config("version", "3.0")
+        speak(f"My name is {name} {version}.")
         return True
     return False
 
 def who_created_you(command):
     if "who created you" in command.lower():
-        speak("I was created by Mr. Yoga.")
+        creator = config.get_config("user_name", "Mr. Yoga")
+        speak(f"I was created by {creator}.")
         return True
     return False
 
@@ -204,21 +209,26 @@ def handle_command(command):
         speak("I didn't catch that. Please say it again.")
         return
 
-    if any([
-        basic_greeting(command),
-        about_chatgpt(command),
-        help_requests(command),
-        play_music(command),
-        emotional_support(command),
-        compliments(command),
-        entertainment_requests(command),
-        what_is_your_name(command),
-        who_created_you(command),
-        total_coding_lines(command)
-    ]):
-        return
+    handlers = [
+        basic_greeting,
+        about_chatgpt,
+        help_requests,
+        play_music,
+        emotional_support,
+        compliments,
+        entertainment_requests,
+        what_is_your_name,
+        who_created_you,
+        total_coding_lines
+    ]
+    for handler in handlers:
+        if handler(command):
+            return
     else:
-        speak("I didn't understand that. Can you repeat?")
+        from smart_ai_chat import ask_conversational_ai
+        answer = ask_conversational_ai(command)
+        if answer:
+            speak(answer)
 
 # -------------------- Main Loop -------------------- #
 def main():
