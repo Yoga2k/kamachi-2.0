@@ -1,4 +1,5 @@
 from shutil import which
+import re
 
 tamil_nadu = {
     1: "how many districts in tamil nadu: Tamil Nadu has 38 districts.",
@@ -102,11 +103,42 @@ tamil_nadu = {
     100: "which districts are famous for tourism and heritage: Madurai, Thanjavur, Kanchipuram, Mahabalipuram."
 }
 
-def tamil_nadu_info(query: str):
-    for value in tamil_nadu.values():
-        if query.lower() in value.lower():
+def _find_info(query: str, data_dict: dict):
+    if not query:
+        return "Sorry, I didn't catch your question."
+    q = query.lower().strip()
+    
+    stop_words = {"what", "is", "the", "of", "in", "are", "which", "who", "how", "many", "tell", "me", "about", "can", "you", "please"}
+    query_words = set(re.findall(r'\b\w+\b', q)) - stop_words
+
+    best_match = None
+    max_overlap = 0
+
+    for value in data_dict.values():
+        val_lower = value.lower()
+        if ":" in val_lower:
+            q_part, a_part = val_lower.split(":", 1)
+        else:
+            q_part, a_part = val_lower, val_lower
+
+        # Direct inclusion
+        if q in val_lower or q_part.strip() in q:
             return value
+
+        # Overlap ranking
+        q_words = set(re.findall(r'\b\w+\b', q_part)) - stop_words
+        overlap = len(query_words & q_words)
+        if overlap > max_overlap and overlap >= 2:
+            max_overlap = overlap
+            best_match = value
+
+    if best_match:
+        return best_match
     return "Sorry, I don't know the answer."
+
+
+def tamil_nadu_info(query: str):
+    return _find_info(query, tamil_nadu)
 
 andhra_pradesh = {
     1: "how many districts in andhra pradesh: Andhra Pradesh has 26 districts.",
@@ -215,7 +247,4 @@ andhra_pradesh = {
 # existed but had no way to query it, making it dead data. Mirrors the
 # same lookup pattern as tamil_nadu_info() for consistency.
 def andhra_pradesh_info(query: str):
-    for value in andhra_pradesh.values():
-        if query.lower() in value.lower():
-            return value
-    return "Sorry, I don't know the answer."
+    return _find_info(query, andhra_pradesh)

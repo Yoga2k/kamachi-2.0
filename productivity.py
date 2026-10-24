@@ -1,14 +1,24 @@
 import os
+from pathlib import Path
+import config
 from utils import speak, take_command  # Voice input/output functions
 
 # -------------------- File Operations -------------------- #
+def _resolve_file_path(file_name):
+    p = Path(file_name)
+    if not p.is_absolute():
+        p = config.get_app_dir() / file_name
+    return str(p)
+
+
 def append_to_file(file_name, content):
     """Appends content to a file safely."""
     if not content.strip():
         speak("Content cannot be empty.")
         return
+    full_path = _resolve_file_path(file_name)
     try:
-        with open(file_name, "a", encoding="utf-8") as file:
+        with open(full_path, "a", encoding="utf-8") as file:
             file.write(content + "\n")
         speak(f"Your entry has been saved: {content}")
     except Exception as e:
@@ -17,11 +27,12 @@ def append_to_file(file_name, content):
 
 def read_file(file_name):
     """Reads content from a file safely."""
-    if not os.path.exists(file_name):
+    full_path = _resolve_file_path(file_name)
+    if not os.path.exists(full_path):
         speak(f"No entries found in {file_name.replace('.txt','')}.")
         return []
     try:
-        with open(file_name, "r", encoding="utf-8") as file:
+        with open(full_path, "r", encoding="utf-8") as file:
             return [line.strip() for line in file.readlines()]
     except Exception as e:
         speak(f"An error occurred while reading {file_name}: {e}")

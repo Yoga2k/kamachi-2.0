@@ -39,3 +39,11 @@ ENV/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Logs
+*.log
+system_Control/*.log
+config.json
+storage/
+Screenshorts/
+*.db

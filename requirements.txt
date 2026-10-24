@@ -12,6 +12,7 @@ pywhatkit
 # --- Location & Translation ---
 geopy
 deep-translator   # advanced_features.py uses deep_translator, NOT googletrans
+langdetect        # optional: improves language auto-detection in language_manager.py
 
 # --- Web / Networking ---
 requests

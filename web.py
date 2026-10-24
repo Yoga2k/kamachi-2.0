@@ -19,24 +19,79 @@ WEBSITE_SHORTCUTS = {
     "github": "https://www.github.com"
 }
 
+def fetch_weather(city_query=None):
+    """
+    Unified, reliable weather engine for KAMACHI.
+    Attempts wttr.in JSON API first, then falls back to Google scraping.
+    Works anywhere without requiring paid external API keys.
+    """
+    city = (city_query or "").strip()
+    # Clean spoken weather command prefixes if present
+    for prefix in ["weather in", "weather of", "weather at", "weather for", "what's the weather in", "what is the weather in", "current weather in", "tell today weather in", "today weather in", "today weather", "current weather", "what's the weather", "weather"]:
+        if city.lower().startswith(prefix):
+            city = city[len(prefix):].strip()
+            break
+
+    if not city:
+        city = config.get_config("weather_city", "Gudiyatham, Vellore")
+
+    speak(f"Fetching current weather for {city}...")
+
+    # Method 1: wttr.in JSON API (free, fast, highly reliable)
+    try:
+        url = f"https://wttr.in/{requests.utils.quote(city)}?format=j1"
+        res = requests.get(url, timeout=5, headers={"User-Agent": "curl/7.68.0"})
+        if res.status_code == 200:
+            data = res.json()
+            current = data.get("current_condition", [{}])[0]
+            temp_c = current.get("temp_C", "")
+            feels_like = current.get("FeelsLikeC", "")
+            desc = current.get("weatherDesc", [{}])[0].get("value", "")
+            humidity = current.get("humidity", "")
+            
+            if temp_c:
+                msg = f"In {city}, it is currently {temp_c}°C and {desc}."
+                if feels_like and feels_like != temp_c:
+                    msg += f" Feels like {feels_like}°C."
+                if humidity:
+                    msg += f" Humidity is {humidity}%."
+                print(f"[Weather] {msg}")
+                speak(msg)
+                return msg
+    except Exception:
+        pass
+
+    # Method 2: Google Search Fallback
+    try:
+        search_url = f"https://www.google.com/search?q=weather+{requests.utils.quote(city)}"
+        response = requests.get(search_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}, timeout=6)
+        soup = BeautifulSoup(response.text, "html.parser")
+        temp_elem = soup.find("span", class_="wob_t") or soup.find("div", class_="BNeawe iBp4i AP7Wnd")
+        condition_elem = soup.find("div", class_="wob_dcp") or soup.find("div", class_="BNeawe tAd8D AP7Wnd")
+        
+        if temp_elem and condition_elem:
+            temp = temp_elem.text.strip()
+            condition = condition_elem.text.strip().split("\n")[0]
+            msg = f"The temperature in {city} is {temp} with {condition}."
+            print(f"[Weather] {msg}")
+            speak(msg)
+            return msg
+    except Exception:
+        pass
+
+    fallback_msg = f"Unable to fetch weather details for {city} right now. Please check your internet connection."
+    speak(fallback_msg)
+    return fallback_msg
+
+
 def web_and_online_features(command):
     command = command.lower().strip()
     
     try:
-        # 🌤️ Weather
-        if "tell today weather" in command or "today weather" in command:
-            city = config.get_config("weather_city", "Gudiyatham, Vellore")
-            speak(f"Fetching today's weather for {city}...")
-            url = f"https://www.google.com/search?q=weather+{city.replace(' ', '+')}"
-            webbrowser.open(url)
-            try:
-                response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-                soup = BeautifulSoup(response.text, "html.parser")
-                temp = soup.find("span", class_="wob_t").text
-                condition = soup.find("div", class_="wob_dcp").text
-                speak(f"The current temperature is {temp} degrees with {condition}.")
-            except Exception:
-                speak("Unable to fetch the weather details right now.")
+        # 🌤️ Weather (Consolidated)
+        if any(k in command for k in ["weather", "today weather", "current weather", "what's the weather"]):
+            fetch_weather(command)
+
 
         # 📰 News
         elif "tell today news" in command or "today news" in command:
@@ -173,13 +228,16 @@ def play_first_youtube_video(query):
         search_query = f"{query} site:youtube.com"
         results = []
         try:
+            # Modern googlesearch-python uses num_results (not stop)
             results = list(search(search_query, num_results=1))
-        except TypeError:
+        except Exception:
+            # Generator fallback: consume only the first item
             try:
-                legacy_kw = {"stop": 1}
-                results = list(search(search_query, **legacy_kw))
+                for r in search(search_query):
+                    results = [r]
+                    break
             except Exception:
-                results = [r for idx, r in enumerate(search(search_query)) if idx < 1]
+                pass
         if results:
             speak(f"Opening the top YouTube result for {query}")
             webbrowser.open(results[0])

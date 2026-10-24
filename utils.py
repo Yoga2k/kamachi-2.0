@@ -17,40 +17,60 @@ except Exception:
 
 
 # ------------------------------------------------------------
-# TEXT-TO-SPEECH INITIALIZATION
 # ------------------------------------------------------------
-engine = pyttsx3.init()
-engine.setProperty('rate', 150)
-engine.setProperty('volume', 1.0)
-voices = engine.getProperty('voices')
+# TEXT-TO-SPEECH INITIALIZATION & CONFIGURATION
+# ------------------------------------------------------------
+try:
+    import config
+    CONFIG_SPEECH_RATE = int(config.get_config("speech_rate", 150))
+    CONFIG_SPEECH_VOLUME = float(config.get_config("speech_volume", 1.0))
+except Exception:
+    CONFIG_SPEECH_RATE = 150
+    CONFIG_SPEECH_VOLUME = 1.0
 
-# Default voice (first available)
+# Initialize pyttsx3 engine
+engine = pyttsx3.init()
+engine.setProperty('rate', CONFIG_SPEECH_RATE)
+engine.setProperty('volume', CONFIG_SPEECH_VOLUME)
+voices = engine.getProperty('voices')
+current_voice_index = 0
+
 if voices:
     engine.setProperty('voice', voices[0].id)
+
+# Initialize persistent Windows SAPI speaker
+_sapi_speaker = None
+if platform.system() == "Windows":
+    try:
+        import win32com.client
+        _sapi_speaker = win32com.client.Dispatch("SAPI.SpVoice")
+        # Map speech rate (100-250) to SAPI (-10 to +10)
+        sapi_rate = max(-10, min(10, int((CONFIG_SPEECH_RATE - 150) / 12)))
+        _sapi_speaker.Rate = sapi_rate
+        _sapi_speaker.Volume = max(0, min(100, int(CONFIG_SPEECH_VOLUME * 100)))
+    except Exception:
+        _sapi_speaker = None
 
 
 # ------------------------------------------------------------
 # SPEAK FUNCTION (CROSS-PLATFORM FALLBACKS)
 # ------------------------------------------------------------
 def speak(text):
-
     text = str(text)
 
     if _HAS_AVATAR_UI:
         avatar_ui.notify_status("speaking")
         avatar_ui.notify_ai_said(text)
 
-    # --- Windows win32com method ---
-    try:
-        if platform.system() == "Windows":
-            import win32com.client
-            speaker = win32com.client.Dispatch("SAPI.SpVoice")
-            speaker.Speak(text)
+    # --- Windows persistent win32com SAPI method ---
+    if _sapi_speaker is not None:
+        try:
+            _sapi_speaker.Speak(text)
             if _HAS_AVATAR_UI:
                 avatar_ui.notify_status("idle")
             return
-    except Exception:
-        pass
+        except Exception:
+            pass
 
     # --- Windows PowerShell fallback ---
     if platform.system() == "Windows":
@@ -90,28 +110,60 @@ def speak(text):
 # ------------------------------------------------------------
 def list_voices():
     print("\nAvailable Voices:")
+    available = []
+    if _sapi_speaker is not None:
+        try:
+            sapi_voices = _sapi_speaker.GetVoices()
+            for index in range(sapi_voices.Count):
+                desc = sapi_voices.Item(index).GetDescription()
+                print(f"{index + 1}: {desc}")
+                available.append(desc)
+            return available
+        except Exception:
+            pass
+
     for index, voice in enumerate(voices):
         print(f"{index + 1}: {voice.name}")
-    return voices
+        available.append(voice.name)
+    return available
 
 
 def change_voice(command):
     """
-    Change voice using command like 'change voice 2'
+    Change voice across both SAPI and pyttsx3 engines (e.g. 'change voice 2').
     """
-    global voices
+    global current_voice_index
     try:
-        if "voice" in command:
-            numbers = [int(s) for s in command.split() if s.isdigit()]
-            if numbers:
-                index = numbers[0] - 1
-                if 0 <= index < len(voices):
-                    engine.setProperty('voice', voices[index].id)
-                    speak(f"Voice changed to {voices[index].name}")
-                else:
-                    speak("Invalid voice number.")
-            else:
-                speak("Please say or type a valid number after 'change voice'.")
+        numbers = [int(s) for s in command.split() if s.isdigit()]
+        if not numbers:
+            speak("Please specify a voice number. For example, say 'change voice 2'.")
+            return
+
+        index = numbers[0] - 1
+        voice_name = None
+
+        # Switch SAPI voice if available
+        if _sapi_speaker is not None:
+            try:
+                sapi_voices = _sapi_speaker.GetVoices()
+                if 0 <= index < sapi_voices.Count:
+                    _sapi_speaker.Voice = sapi_voices.Item(index)
+                    current_voice_index = index
+                    voice_name = sapi_voices.Item(index).GetDescription()
+            except Exception:
+                pass
+
+        # Switch pyttsx3 voice as well
+        if 0 <= index < len(voices):
+            engine.setProperty('voice', voices[index].id)
+            if not voice_name:
+                voice_name = voices[index].name
+            current_voice_index = index
+
+        if voice_name:
+            speak(f"Voice changed to {voice_name}")
+        else:
+            speak("Invalid voice number. Say 'change voice' followed by a valid number.")
     except Exception:
         speak("Sorry, I couldn't change the voice.")
 

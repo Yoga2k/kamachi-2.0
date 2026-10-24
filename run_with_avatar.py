@@ -14,15 +14,29 @@ extra visual companion, not a replacement for the console.
 """
 
 import os
+import sys
 import threading
+from pathlib import Path
 
 import avatar_ui
 import kamachi2_0
 
 
-def main():
-    avatar_path = os.path.join(os.path.dirname(__file__), "assets", "robot_avatar.png")
+def get_avatar_path():
+    """Locate robot_avatar.png safely in frozen PyInstaller or local dev directory."""
+    candidates = []
+    if getattr(sys, 'frozen', False):
+        candidates.append(Path(getattr(sys, '_MEIPASS', '')) / "assets" / "robot_avatar.png")
+        candidates.append(Path(sys.executable).resolve().parent / "assets" / "robot_avatar.png")
+    candidates.append(Path(__file__).resolve().parent / "assets" / "robot_avatar.png")
+    for p in candidates:
+        if p.exists():
+            return str(p)
+    return str(candidates[-1])
 
+
+def main():
+    avatar_path = get_avatar_path()
     ui = avatar_ui.init_ui(avatar_path)
 
     # Run the actual assistant logic in the background so the Tkinter

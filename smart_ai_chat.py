@@ -5,7 +5,10 @@ to ensure KAMACHI always gives intelligent, human-like answers instead of 'I did
 """
 
 import requests
-import wikipedia
+try:
+    import wikipedia
+except ImportError:
+    wikipedia = None
 import config
 
 SYSTEM_PROMPT = (
@@ -48,6 +51,9 @@ def ask_gemini(user_query, api_key):
 
 def ask_wikipedia(user_query):
     """Query Wikipedia for instant factual knowledge (who is, what is, tell me about)."""
+    if not wikipedia:
+        return None
+
     clean_query = user_query.lower()
     for prefix in ("who is", "what is", "tell me about", "explain", "where is", "search for"):
         if clean_query.startswith(prefix):

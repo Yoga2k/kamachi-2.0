@@ -2,6 +2,7 @@ from assistant_conversations import handle_command
 from file_management import handle_files
 from utils import speak, take_command, choose_input_mode,change_voice
 from web import web_and_online_features
+from language_manager import language_features
 from advanced_features import advanced_features
 from productivity import productivity_features
 from Education.coding_assist import programming_help
@@ -233,10 +234,12 @@ def kamachi_3_0():
             voice_wifi_control()
 
         # -----------------------------
-        # ONLINE / WEB
+        # ONLINE / WEB & WEATHER
         # -----------------------------
         elif match_command(command, {
-            "search google", "today news", "close web","search youtube for", "today news","tell today weather","weather", "youtube", "open website"
+            "search google", "today news", "close web", "search youtube for",
+            "tell today weather", "weather", "current weather", "what's the weather",
+            "today weather", "weather in", "youtube", "open website"
         }):
             web_and_online_features(command)
 
@@ -244,8 +247,8 @@ def kamachi_3_0():
         # ADVANCED FEATURES
         # -----------------------------
         elif match_command(command, {
-            "current weather", "what's the weather", "where am i", "find my location",
-            "my location", "current location", "where is my pc", "translate"
+            "where am i", "find my location", "my location", "current location",
+            "where is my pc", "translate"
         }):
             advanced_features(command)
 
@@ -257,10 +260,14 @@ def kamachi_3_0():
         }):
             productivity_features(command)
 
-        # -----------------------------t
+        # -----------------------------
         # FILE MANAGEMENT
         # -----------------------------
-        elif match_command(command, {"create file", "document"}):
+        elif match_command(command, {
+            "create file", "new file", "make file", "create folder", "new folder",
+            "make folder", "delete file", "remove file", "rename", "document",
+            "file management"
+        }):
             handle_files(command)
 
         # -----------------------------
@@ -270,11 +277,12 @@ def kamachi_3_0():
             voice_metal_control(command)
 
         # -----------------------------
-        # APP CONTROL
+        # APP & STORAGE / ONEDRIVE CONTROL
         # -----------------------------
         elif match_command(command, {
-            "open", "close", "launch", "notepad", "calculator", "chrome",
-            "word", "excel", "spotify", "vlc", "file explorer"
+            "open", "close", "launch", "access", "start", "notepad", "calculator", "chrome",
+            "word", "excel", "spotify", "vlc", "file explorer", "onedrive", "one drive",
+            "downloads", "documents", "pictures", "desktop"
         }):
             app_application(command)
 
@@ -313,6 +321,19 @@ def kamachi_3_0():
             
         elif match_command(command, {"change voice"}):
             change_voice(command)
+
+        # -----------------------------
+        # MULTI-LANGUAGE FEATURES
+        # -----------------------------
+        elif match_command(command, {
+            "translate", "translation", "switch language", "change language",
+            "set language", "speak in", "respond in", "detect language",
+            "what language", "identify language", "which language is this",
+            "list languages", "show languages", "supported languages",
+            "available languages", "current language", "your language",
+            "batch translate", "multiple translate"
+        }):
+            language_features(command)
 
         # -----------------------------
         # BATTERY & RAM STATUS

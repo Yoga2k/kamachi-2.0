@@ -86,8 +86,7 @@ responses = {
         "r import": "The `library` function in R is used to include packages. Example: library(ggplot2); ggplot(data, aes(x, y)) + geom_point()",
         # MATLAB Basics
         "matlab variables": "In MATLAB, variables are used to store data. Example: x = 10; y = 'Hello'; z = 3.14;",
-        "matlab operators": "MATLAB operators include arithmetic (+, -, *, /), comparison (==, ~=, >, <), logical (&&, ||, ~), and assignment (=, +=, -=) operators.",
-        "matlab import": "The `import` statement in MATLAB is used to include packages. Example: import matplotlib.pyplot as plt; plt.plot(x, y)",
+        "matlab import": "The `import` statement in MATLAB is used to include packages. Example: import matlab.graphics.*;",
         # Go Basics
         "go variables": "In Go, variables are used to store data. Example: var x int = 10; var y string = 'Hello'; var z float64 = 3.14",
         "go operators": "Go operators include arithmetic (+, -, *, /), comparison (==, !=, >, <), logical (&&, ||, !), and assignment (=, +=, -=) operators.",
@@ -120,66 +119,66 @@ responses = {
 
 
         # If statement
-        "if statement": "What is the syntax of an `if` statement in Python?",
+        "if statement": "An if statement in Python executes a block of code only if its condition evaluates to True. Example: if x > 5: print('Greater')",
         # If else statement
-        "if else statement": "How does an `if else` statement work in Python?",
+        "if else statement": "An if-else statement runs the if-block when condition is True, and runs the else-block when condition is False.",
         # Elif statement
-        "elif statement": "What is the purpose of the `elif` statement in Python?",
+        "elif statement": "The elif statement checks additional conditions if the preceding if condition was False. Example: elif x == 5:",
         # For loop
-        "for loop": "How do you use a `for` loop in Python?",
+        "for loop": "A for loop iterates over a sequence such as a list, tuple, string, or range. Example: for i in range(5): print(i)",
         # While loop
-        "while loop": "How do you use a `while` loop in Python?",
+        "while loop": "A while loop repeatedly executes code as long as a condition remains True. Example: while count < 5: count += 1",
         # Nested loops
-        "nested loops": "What are nested loops and how are they used in Python?",
+        "nested loops": "Nested loops are loops placed inside other loops, commonly used for working with multi-dimensional matrices or coordinate grids.",
         # Break statement
-        "break statement": "What is the function of the `break` statement in Python?",
+        "break statement": "The break statement immediately terminates the innermost active loop and jumps to the code following the loop.",
         # Continue statement
-        "continue statement": "When would you use the `continue` statement in Python?",
+        "continue statement": "The continue statement skips the rest of the current iteration and jumps directly to the next loop iteration.",
         # Pass statement
-        "pass statement": "What is the purpose of the `pass` statement in Python?",
+        "pass statement": "The pass statement is a null placeholder in Python used where code is syntactically required but no action is needed.",
         # Try except block
-        "try except block": "How does a `try except` block work in Python?",
+        "try except block": "A try-except block handles runtime errors gracefully to prevent program crashes. Example: try: 1/0 except ZeroDivisionError: print('Error')",
         # Functions
-        "python functions": "How do you define and call a function in Python?",
+        "python functions": "Python functions are reusable blocks of code defined using the 'def' keyword. Example: def greet(name): return f'Hello {name}'",
         # Lambda functions
-        "lambda functions": "What are lambda functions and how are they used in Python?",
+        "lambda functions": "Lambda functions are small, anonymous single-line functions created using the 'lambda' keyword. Example: square = lambda x: x * x",
         # Classes
-        "python classes": "How do you define a class in Python?",
+        "python classes": "Classes in Python are blueprints for creating objects, defined using 'class'. Example: class Dog: def __init__(self, name): self.name = name",
         # Inheritance
-        "inheritance in python": "What is inheritance and how is it implemented in Python?",
+        "inheritance in python": "Inheritance allows a child class to inherit attributes and methods from a parent class using 'class Child(Parent):'.",
         # Modules
-        "python modules": "How do you import and use modules in Python?",
+        "python modules": "Modules are Python files containing functions and classes that you can import using 'import module_name'.",
         # File handling
-        "file handling in python": "How do you read from and write to files in Python?",
+        "file handling in python": "Python handles files using open(), best used with 'with open(\"file.txt\", \"r\") as f:' to automatically ensure proper closing.",
         # Arithmetic operators
-        "arithmetic operators": "What are arithmetic operators in Python and how are they used?",
+        "arithmetic operators": "Arithmetic operators in Python perform mathematical calculations: addition (+), subtraction (-), multiplication (*), division (/), floor division (//), modulus (%), and exponentiation (**).",
         # Comparison operators
-        "comparison operators": "What are comparison operators in Python and how are they used?",
+        "comparison operators": "Comparison operators in Python compare values: equal (==), not equal (!=), greater than (>), less than (<), greater equal (>=), and less equal (<=).",
         # Logical operators
-        "logical operators": "What are logical operators in Python and how are they used?",
+        "logical operators": "Logical operators in Python combine conditional statements: 'and', 'or', and 'not'.",
         # Assignment operators
-        "assignment operators": "What are assignment operators in Python and how are they used?",
+        "assignment operators": "Assignment operators assign values to variables: standard assignment (=) and compound assignments like +=, -=, *=, and /=.",
         # Identity operators
-        "identity operators": "What are identity operators in Python and how are they used?",
+        "identity operators": "Identity operators in Python are 'is' and 'is not', used to compare whether two variables point to the exact same object in memory.",
         # Membership operators
-        "membership operators": "What are membership operators in Python and how are they used?",
+        "membership operators": "Membership operators in Python are 'in' and 'not in', used to check if a value exists within a sequence like a list, tuple, or string.",
         # Bitwise operators
-        "bitwise operators": "What are bitwise operators in Python and how are they used?",
+        "bitwise operators": "Bitwise operators in Python work on numbers at the binary bit level: AND (&), OR (|), XOR (^), NOT (~), left shift (<<), and right shift (>>).",
         # Tkinter
-        "what is tkinter": "What is Tkinter and how is it used in Python?",
-        "tkinter widgets": "What are some common widgets available in Tkinter?",
-        "tkinter layout management": "How do you manage the layout of widgets in Tkinter?",
-        "tkinter events": "How do you handle events in Tkinter?",
+        "what is tkinter": "Tkinter is Python's standard built-in GUI library used to create desktop windows, buttons, dialogs, and graphical applications.",
+        "tkinter widgets": "Common Tkinter widgets include Label, Button, Entry, Text, Frame, Canvas, Checkbutton, Radiobutton, and Listbox.",
+        "tkinter layout management": "Tkinter manages layout using three geometry managers: pack() for linear stacking, grid() for table rows and columns, and place() for absolute pixel coordinates.",
+        "tkinter events": "Tkinter handles events by binding event names to callback functions using widget.bind('<Event>', handler).",
         # JWT
-        "what is jwt": "What is JWT (JSON Web Token) and how is it used?",
-        "jwt structure": "What is the structure of a JWT?",
-        "jwt use cases": "What are some common use cases for JWT?",
-        "jwt security": "How does JWT ensure security?",
+        "what is jwt": "JSON Web Token (JWT) is an open standard that transmits claims securely between parties as a compact, URL-safe JSON object, widely used for stateless authentication.",
+        "jwt structure": "A JWT consists of three parts separated by dots: Header (algorithm & token type), Payload (claims data), and Signature.",
+        "jwt use cases": "Common JWT use cases include user authentication in web APIs, single sign-on (SSO), and secure client-server information exchange.",
+        "jwt security": "JWT ensures security by signing tokens with a secret HMAC key or public-private RSA key pair to guarantee data integrity and prevent tampering.",
         # GUI
-        "what is gui": "What is a GUI (Graphical User Interface)?",
-        "gui elements": "What are some common elements of a GUI?",
-        "gui design principles": "What are some key principles of GUI design?",
-        "gui frameworks": "What are some popular GUI frameworks for Python?"
+        "what is gui": "A GUI (Graphical User Interface) is a visual system that lets users interact with software using icons, buttons, and windows instead of text commands.",
+        "gui elements": "Common GUI elements include windows, buttons, input fields, menus, dialogs, checkboxes, sliders, and progress bars.",
+        "gui design principles": "Key GUI design principles include consistency, clear feedback, visual hierarchy, simplicity, error prevention, and accessibility.",
+        "gui frameworks": "Popular Python GUI frameworks include Tkinter, PyQt, PySide, Kivy, and CustomTkinter."
    
 
       

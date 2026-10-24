@@ -4,7 +4,10 @@
   "version": "3.0",
   "default_call_contact": "Amma",
   "weather_city": "Gudiyatham, Vellore",
-  "speech_rate": 150,
+  "speech_rate": 119,
   "speech_volume": 1.0,
-  "default_input_mode": "voice"
-}
+  "default_input_mode": "voice",
+  "default_language": "en",
+  "gemini_api_key": "",
+  "enable_companion_avatar": true
+}

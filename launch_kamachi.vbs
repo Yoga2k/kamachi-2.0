@@ -3,13 +3,16 @@ Set fso = CreateObject("Scripting.FileSystemObject")
 currentDir = fso.GetParentFolderName(WScript.ScriptFullName)
 WshShell.CurrentDirectory = currentDir
 
-' Universal Python discovery across any Windows PC
+' Universal Python discovery across any Windows PC (check local venv first)
+localVenv = currentDir & "\kamachi\Scripts\pythonw.exe"
 userProfile = WshShell.ExpandEnvironmentStrings("%USERPROFILE%")
 localPy310 = userProfile & "\AppData\Local\Programs\Python\Python310\pythonw.exe"
 localPy311 = userProfile & "\AppData\Local\Programs\Python\Python311\pythonw.exe"
 localPy312 = userProfile & "\AppData\Local\Programs\Python\Python312\pythonw.exe"
 
-If fso.FileExists(localPy310) Then
+If fso.FileExists(localVenv) Then
+    pythonwExe = """" & localVenv & """"
+ElseIf fso.FileExists(localPy310) Then
     pythonwExe = """" & localPy310 & """"
 ElseIf fso.FileExists(localPy311) Then
     pythonwExe = """" & localPy311 & """"

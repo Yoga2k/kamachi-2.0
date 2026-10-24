@@ -1,7 +1,20 @@
 import pyautogui
 import datetime
 import os
+import sys
 import time
+from pathlib import Path
+
+
+def _get_screenshots_dir():
+    if getattr(sys, 'frozen', False):
+        base = Path(sys.executable).resolve().parent
+    else:
+        base = Path(__file__).resolve().parents[1]
+    folder = base / "Screenshots"
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
 
 def take_screenshot(delay=0):
     """
@@ -12,17 +25,11 @@ def take_screenshot(delay=0):
     if delay > 0:
         time.sleep(delay)
 
-    # Create folder if not exists
-    folder = "Screenshots"
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-    # File name with timestamp
+    folder = _get_screenshots_dir()
     filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".png"
-    filepath = os.path.join(folder, filename)
+    filepath = folder / filename
 
-    # Capture screenshot
     screenshot = pyautogui.screenshot()
-    screenshot.save(filepath)
+    screenshot.save(str(filepath))
 
     return f"📸 Screenshot saved at {filepath}"

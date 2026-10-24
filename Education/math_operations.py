@@ -60,7 +60,7 @@ def calculate_expression(command):
             "ten": "10"
         }
         for word, digit in number_words.items():
-            command = command.replace(word, digit)
+            command = re.sub(rf'\b{word}\b', digit, command)
 
         # Replace operators and keywords
         command = command.replace("plus", "+").replace("minus", "-")
@@ -261,12 +261,25 @@ def calculate_expression(command):
         elif "percentage" in command:
             values = [float(num) for num in re.findall(r'[\d.]+', command)]
             return f"The result is {percentage(*values)}%"
-        elif "convert_unit" in command:
+        elif "convert_unit" in command or "convert" in command:
+            match = re.search(r'([\d.]+)\s*([a-zA-Z]+)\s+to\s+([a-zA-Z]+)', command)
+            if match:
+                value = float(match.group(1))
+                from_unit = match.group(2).lower()
+                to_unit = match.group(3).lower()
+                return f"The result is {convert_unit(value, from_unit, to_unit)}"
             parts = command.split()
-            value = float(parts[1])
-            from_unit = parts[2]
-            to_unit = parts[4]
-            return f"The result is {convert_unit(value, from_unit, to_unit)}"
+            try:
+                numeric_candidates = [p for p in parts if re.match(r'^[\d.]+$', p)]
+                if numeric_candidates and "to" in parts:
+                    value = float(numeric_candidates[0])
+                    to_idx = parts.index("to")
+                    from_unit = parts[to_idx - 1]
+                    to_unit = parts[to_idx + 1]
+                    return f"The result is {convert_unit(value, from_unit, to_unit)}"
+            except Exception:
+                pass
+            return "Please use the format: convert 10 meters to kilometers."
 
         # Join the extracted parts and evaluate safely
         # FIX: uses _build_safe_expression() now instead of a raw "".join(),
