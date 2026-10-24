@@ -1,6 +1,104 @@
 import re
 import math
+import ast
+import operator
 from fractions import Fraction
+
+_SAFE_MATH_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.FloorDiv: operator.floordiv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+_SAFE_MATH_FUNCS = {
+    "math.sqrt": math.sqrt,
+    "math.log": math.log,
+    "math.sin": math.sin,
+    "math.cos": math.cos,
+    "math.tan": math.tan,
+    "math.gcd": math.gcd,
+    "sqrt": math.sqrt,
+    "log": math.log,
+    "sin": math.sin,
+    "cos": math.cos,
+    "tan": math.tan,
+    "gcd": math.gcd,
+    "abs": abs,
+    "round": round,
+}
+
+_SAFE_MATH_CONSTS = {
+    "math.pi": math.pi,
+    "math.e": math.e,
+    "pi": math.pi,
+    "e": math.e,
+}
+
+def _safe_eval_math(expr_str, extra_funcs=None):
+    """Safely parse and evaluate mathematical expressions using AST.
+    Restricts nodes strictly to numbers, math operators, constants, and whitelisted functions.
+    Rejects any code execution, attributes, imports, or statements.
+    """
+    funcs = dict(_SAFE_MATH_FUNCS)
+    if extra_funcs:
+        funcs.update(extra_funcs)
+
+    tree = ast.parse(expr_str, mode='eval')
+
+    def _eval(node):
+        if isinstance(node, ast.Expression):
+            return _eval(node.body)
+        elif isinstance(node, ast.Constant):
+            if isinstance(node.value, (int, float, complex)):
+                return node.value
+            raise ValueError("Only numeric literals are allowed")
+        elif isinstance(node, ast.Name):
+            if node.id in _SAFE_MATH_CONSTS:
+                return _SAFE_MATH_CONSTS[node.id]
+            raise ValueError(f"Unknown or disallowed identifier: {node.id}")
+        elif isinstance(node, ast.Attribute):
+            if isinstance(node.value, ast.Name):
+                full_name = f"{node.value.id}.{node.attr}"
+                if full_name in _SAFE_MATH_CONSTS:
+                    return _SAFE_MATH_CONSTS[full_name]
+            raise ValueError("Unsupported attribute access")
+        elif isinstance(node, ast.UnaryOp):
+            if type(node.op) in _SAFE_MATH_OPERATORS:
+                return _SAFE_MATH_OPERATORS[type(node.op)](_eval(node.operand))
+            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+        elif isinstance(node, ast.BinOp):
+            if type(node.op) in _SAFE_MATH_OPERATORS:
+                left = _eval(node.left)
+                right = _eval(node.right)
+                if isinstance(node.op, ast.Pow):
+                    if isinstance(right, (int, float)) and right > 10000:
+                        raise ValueError("Exponent too large")
+                return _SAFE_MATH_OPERATORS[type(node.op)](left, right)
+            raise ValueError(f"Unsupported binary operator: {type(node.op).__name__}")
+        elif isinstance(node, ast.Call):
+            if node.keywords:
+                raise ValueError("Keyword arguments are not allowed")
+            fn = None
+            if isinstance(node.func, ast.Name) and node.func.id in funcs:
+                fn = funcs[node.func.id]
+            elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+                full_name = f"{node.func.value.id}.{node.func.attr}"
+                if full_name in funcs:
+                    fn = funcs[full_name]
+            if fn is None:
+                raise ValueError("Function call is not permitted")
+            args = [_eval(a) for a in node.args]
+            return fn(*args)
+        else:
+            raise ValueError(f"Disallowed expression node: {type(node).__name__}")
+
+    return _eval(tree)
 
 # FIX (bug found via testing): functions that need a real Python call with
 # parentheses around their argument(s), e.g. math.sqrt(16) instead of the
@@ -214,12 +312,8 @@ def calculate_expression(command):
             else:
                 return "Conversion not supported."
 
-        # Extract numbers, operators, and functions
-        # FIX: added "lcm" as its own token alternative — previously the bare
-        # word "lcm" (from "lcm of" -> "lcm") wasn't matched by any
-        # alternative in this regex and was silently dropped, so the lcm()
-        # function was never actually called.
-        expression = re.findall(r'[\d.]+|[\+\-\*/\(\)\^]|math\.\w+|Fraction|lcm|\w+\(.*?\)', command)
+        # Extract numbers, operators, and allowed math functions
+        expression = re.findall(r'[\d.]+|[\+\-\*/\(\)\^,]|math\.\w+|Fraction|lcm', command)
         if not expression:
             return "I couldn't understand the mathematical expression."
 
@@ -281,11 +375,9 @@ def calculate_expression(command):
                 pass
             return "Please use the format: convert 10 meters to kilometers."
 
-        # Join the extracted parts and evaluate safely
-        # FIX: uses _build_safe_expression() now instead of a raw "".join(),
-        # so function calls like math.sqrt(16) are valid Python syntax.
+        # Join the extracted parts and evaluate safely via AST
         safe_expression = _build_safe_expression(expression)
-        result = eval(safe_expression)
+        result = _safe_eval_math(safe_expression, extra_funcs={"lcm": lcm, "Fraction": Fraction})
         return f"The result is {result}"
 
     except ZeroDivisionError:
