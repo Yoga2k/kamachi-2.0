@@ -21,7 +21,11 @@ def ask_gemini(user_query, api_key):
     """Query Google Gemini API (free tier) for natural conversational intelligence."""
     if not api_key:
         return None
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+    headers = {
+        "x-goog-api-key": api_key,
+        "Content-Type": "application/json"
+    }
     payload = {
         "contents": [
             {
@@ -36,7 +40,7 @@ def ask_gemini(user_query, api_key):
         }
     }
     try:
-        response = requests.post(url, json=payload, timeout=8)
+        response = requests.post(url, headers=headers, json=payload, timeout=8)
         if response.status_code == 200:
             data = response.json()
             candidates = data.get("candidates", [])
