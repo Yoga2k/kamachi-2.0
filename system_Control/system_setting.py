@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import subprocess
 import pyautogui
 import screen_brightness_control as sbc
@@ -135,7 +136,7 @@ def check_virus_status(start_scan=True):
         msg = "Warning! Potential virus or malware threats were detected on your computer. Opening Windows Security now."
         print(f"[Security] {msg}\nThreat Details: {threat_output}")
         speak(msg)
-        subprocess.Popen("start windowsdefender:", shell=True)
+        os.startfile("windowsdefender:")
         return {"threats_found": True, "details": threat_output}
     else:
         status_desc = "active and protecting your system" if rt_enabled else "currently disabled"
@@ -146,7 +147,7 @@ def check_virus_status(start_scan=True):
         if start_scan:
             speak("Starting Windows Defender quick virus scan in the background...")
             subprocess.Popen([ps_path, "-NoProfile", "-Command", "Start-MpScan -ScanType QuickScan"])
-            subprocess.Popen("start windowsdefender:", shell=True)
+            os.startfile("windowsdefender:")
             
         return {"threats_found": False, "realtime_protection": rt_enabled}
 
@@ -184,18 +185,19 @@ def install_software(command_or_name):
             speak("Installation cancelled.")
             return
 
+    # Whitelist / validate app name: alphanumeric, spaces, hyphens, underscores, dots
+    if not re.match(r'^[a-zA-Z0-9_\- .]+$', app_name):
+        speak("Invalid application name for installation.")
+        return
+
     speak(f"Starting installation process for {app_name}...")
     print(f"[App Manager] Installing: {app_name}")
 
-    # Launch winget in a separate visible terminal so user sees download & install progress
-    cmd = (
-        f'start "KAMACHI App Installer - {app_name}" '
-        f'cmd.exe /c "winget install \"{app_name}\" --accept-package-agreements --accept-source-agreements || '
-        f'(echo Package not found in winget repository. Opening Microsoft Store... && pause && '
-        f'start ms-windows-store://search/?query={app_name})"'
-    )
     try:
-        subprocess.Popen(cmd, shell=True)
+        subprocess.Popen(
+            ["winget", "install", app_name, "--accept-package-agreements", "--accept-source-agreements"],
+            shell=False
+        )
         speak(f"I have launched the installer for {app_name}. Please approve the installation if prompted.")
     except Exception as e:
         # Fallback to Microsoft Store search
@@ -212,26 +214,37 @@ def uninstall_software(command_or_name):
             speak("Uninstall cancelled.")
             return
 
+    # Whitelist / validate app name
+    if not re.match(r'^[a-zA-Z0-9_\- .]+$', app_name):
+        speak("Invalid application name for uninstallation.")
+        return
+
     speak(f"Starting uninstallation for {app_name}...")
-    cmd = f'start "KAMACHI Uninstaller - {app_name}" cmd.exe /c "winget uninstall \"{app_name}\""'
-    subprocess.Popen(cmd, shell=True)
+    try:
+        subprocess.Popen(["winget", "uninstall", app_name], shell=False)
+    except Exception as e:
+        speak(f"Failed to start uninstaller for {app_name}.")
 
 
 def open_store(query=None):
     """Open Microsoft Store or search for a specific app in Store."""
     if query:
         clean = clean_app_name(query)
+        if not re.match(r'^[a-zA-Z0-9_\- .]+$', clean):
+            speak("Invalid store search query.")
+            return
         speak(f"Opening Microsoft Store search for {clean}...")
-        subprocess.Popen(f"start ms-windows-store://search/?query={clean}", shell=True)
+        import urllib.parse
+        os.startfile(f"ms-windows-store://search/?query={urllib.parse.quote(clean)}")
     else:
         speak("Opening Microsoft Store...")
-        subprocess.Popen("start ms-windows-store:", shell=True)
+        os.startfile("ms-windows-store:")
 
 
 def list_installed_apps():
     """Open Windows Apps & Features settings to view and manage all installed software."""
     speak("Opening your installed applications list...")
-    subprocess.Popen("start ms-settings:appsfeatures", shell=True)
+    os.startfile("ms-settings:appsfeatures")
 
 
 # ==========================================
@@ -240,10 +253,14 @@ def list_installed_apps():
 
 def open_settings(option, path=""):
     """Open Windows Settings with history tracking."""
-    command = f"start ms-settings:{path}" if path else "start ms-settings:"
-    history.append(command)
+    safe_path = re.sub(r'[^a-zA-Z0-9\-_]', '', path or "")
+    uri = f"ms-settings:{safe_path}" if safe_path else "ms-settings:"
+    history.append(uri)
     speak(f"Opening {option} settings...")
-    subprocess.Popen(command, shell=True)
+    try:
+        os.startfile(uri)
+    except Exception:
+        subprocess.Popen(["cmd.exe", "/c", "start", uri], shell=False)
 
 
 def go_back():
@@ -252,7 +269,10 @@ def go_back():
         history.pop()
         if history:
             speak("Going back to previous settings...")
-            subprocess.Popen(history[-1], shell=True)
+            try:
+                os.startfile(history[-1])
+            except Exception:
+                subprocess.Popen(["cmd.exe", "/c", "start", history[-1]], shell=False)
         else:
             speak("No previous settings page found.")
     else:
@@ -262,19 +282,22 @@ def go_back():
 def open_control_panel():
     """Open Windows Control Panel."""
     speak("Opening Control Panel...")
-    subprocess.Popen("control", shell=True)
+    subprocess.Popen(["control"], shell=False)
 
 
 def open_task_manager():
     """Open Windows Task Manager."""
     speak("Opening Task Manager...")
-    subprocess.Popen("taskmgr", shell=True)
+    subprocess.Popen(["taskmgr"], shell=False)
 
 
 def open_device_manager():
     """Open Windows Device Manager."""
     speak("Opening Device Manager...")
-    subprocess.Popen("devmgmt.msc", shell=True)
+    try:
+        os.startfile("devmgmt.msc")
+    except Exception:
+        subprocess.Popen(["cmd.exe", "/c", "start", "devmgmt.msc"], shell=False)
 
 
 def open_start_menu():
@@ -291,7 +314,10 @@ def open_action_center():
         pyautogui.hotkey("win", "a")
         pyautogui.FAILSAFE = prev_failsafe
     except Exception:
-        subprocess.Popen("start ms-settings:notifications", shell=True)
+        try:
+            os.startfile("ms-settings:notifications")
+        except Exception:
+            pass
     speak("Opening Action Center...")
 
 
@@ -332,7 +358,11 @@ def decrease_volume():
 def refresh_pc():
     """Refresh PC (restart Windows Explorer)."""
     speak("Refreshing system...")
-    subprocess.Popen("taskkill /f /im explorer.exe & start explorer.exe", shell=True)
+    try:
+        subprocess.run(["taskkill", "/f", "/im", "explorer.exe"], shell=False, check=False)
+    except Exception:
+        pass
+    subprocess.Popen(["explorer.exe"], shell=False)
 
 
 def shutdown():
@@ -341,7 +371,7 @@ def shutdown():
     confirm = take_command("Say 'yes' to confirm shutdown:")
     if confirm and "yes" in confirm.lower():
         speak("Shutting down the computer in 3 seconds...")
-        subprocess.Popen("shutdown /s /t 3", shell=True)
+        subprocess.Popen(["shutdown", "/s", "/t", "3"], shell=False)
     else:
         speak("Shutdown cancelled.")
 
@@ -352,7 +382,7 @@ def restart():
     confirm = take_command("Say 'yes' to confirm restart:")
     if confirm and "yes" in confirm.lower():
         speak("Restarting the computer in 3 seconds...")
-        subprocess.Popen("shutdown /r /t 3", shell=True)
+        subprocess.Popen(["shutdown", "/r", "/t", "3"], shell=False)
     else:
         speak("Restart cancelled.")
 

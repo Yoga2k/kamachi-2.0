@@ -1,5 +1,6 @@
 import datetime
 import subprocess
+import re
 from utils import speak
 
 # ------------------------------
@@ -51,20 +52,28 @@ def set_date(new_date: str):
     Format expected: MM-DD-YYYY
     Requires admin privileges.
     """
+    clean_date = (new_date or "").strip()
+    if not re.match(r'^\d{2}[-/]\d{2}[-/]\d{4}$', clean_date):
+        speak("Invalid date format. Expected MM-DD-YYYY.")
+        return
     try:
-        subprocess.run(f'date {new_date}', shell=True)
-        speak(f"Date has been set to {new_date}.")
+        subprocess.run(["cmd.exe", "/c", "date", clean_date], shell=False)
+        speak(f"Date has been set to {clean_date}.")
     except Exception as e:
         speak(f"Failed to set date. Error: {e}")
 
 def set_time(new_time: str):
     """
     Set system time on Windows.
-    Format expected: HH:MM:SS
+    Format expected: HH:MM:SS or HH:MM
     Requires admin privileges.
     """
+    clean_time = (new_time or "").strip()
+    if not re.match(r'^\d{1,2}:\d{2}(?::\d{2})?$', clean_time):
+        speak("Invalid time format. Expected HH:MM or HH:MM:SS.")
+        return
     try:
-        subprocess.run(f'time {new_time}', shell=True)
-        speak(f"Time has been set to {new_time}.")
+        subprocess.run(["cmd.exe", "/c", "time", clean_time], shell=False)
+        speak(f"Time has been set to {clean_time}.")
     except Exception as e:
         speak(f"Failed to set time. Error: {e}")

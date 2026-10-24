@@ -1,6 +1,7 @@
-# pyrefly: ignore-all-errors
 import os
 import sys
+import re
+import subprocess
 import psutil
 from pathlib import Path
 from utils import speak
@@ -158,9 +159,12 @@ def open_application(command):
                 print(msg)
                 speak(msg)
                 if os.path.isdir(target):
-                    os.system(f'explorer.exe "{target}"')
+                    subprocess.Popen(["explorer.exe", target], shell=False)
                 else:
-                    os.system(f'start "" "{target}"')
+                    try:
+                        os.startfile(target)
+                    except Exception:
+                        subprocess.Popen(["cmd.exe", "/c", "start", "", target], shell=False)
             except Exception as e:
                 print(f"⚠️ Error opening {app}: {e}")
                 speak(f"Could not open {app}.")
@@ -175,13 +179,23 @@ def close_application(command):
     """Closes an application based on the command."""
     cmd_clean = command.lower().replace("close the ", "").replace("terminate ", "").replace("shut down ", "").strip()
 
+    # Allowed executables whitelist from known targets
+    allowed_exes = set(APP_TARGETS.values())
+
     for app, exe in APP_TARGETS.items():
         if app in cmd_clean:
             if is_running(exe):
+                # Validate exe name strictly against whitelist
+                if exe not in allowed_exes or not re.match(r'^[a-zA-Z0-9_\-]+\.exe$', exe, re.IGNORECASE):
+                    speak(f"Closing {app} is not permitted.")
+                    return
                 msg = f"🔴 Closing {app.capitalize()}..."
                 print(msg)
                 speak(msg)
-                os.system(f'taskkill /f /im {exe}')
+                try:
+                    subprocess.run(["taskkill", "/f", "/im", exe], shell=False, check=False)
+                except Exception:
+                    pass
             else:
                 msg = f"ℹ️ {app.capitalize()} is not running."
                 print(msg)

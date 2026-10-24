@@ -1,6 +1,7 @@
 import webbrowser
 import requests
 import os
+import subprocess
 from utils import speak, take_command
 from bs4 import BeautifulSoup
 from googlesearch import search
@@ -152,7 +153,10 @@ def web_and_online_features(command):
             confirm = take_command("Say 'yes' to close browser:")
             if confirm and "yes" in confirm.lower():
                 speak("Closing browser windows.")
-                os.system("taskkill /IM chrome.exe /IM msedge.exe")
+                try:
+                    subprocess.run(["taskkill", "/IM", "chrome.exe", "/IM", "msedge.exe"], shell=False, check=False)
+                except Exception:
+                    pass
             else:
                 speak("Browser closure cancelled.")
 

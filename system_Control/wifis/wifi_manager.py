@@ -1,11 +1,13 @@
 import subprocess
 import os
+import re
+import tempfile
 from utils import speak, take_command
 
 def wifi_on():
     """Turn Wi-Fi ON."""
     try:
-        subprocess.run('netsh interface set interface "Wi-Fi" enabled', shell=True)
+        subprocess.run(["netsh", "interface", "set", "interface", "Wi-Fi", "enabled"], shell=False)
         speak("Wi-Fi is turned ON.")
     except Exception:
         speak("Failed to turn on Wi-Fi.")
@@ -13,7 +15,7 @@ def wifi_on():
 def wifi_off():
     """Turn Wi-Fi OFF."""
     try:
-        subprocess.run('netsh interface set interface "Wi-Fi" disabled', shell=True)
+        subprocess.run(["netsh", "interface", "set", "interface", "Wi-Fi", "disabled"], shell=False)
         speak("Wi-Fi is turned OFF.")
     except Exception:
         speak("Failed to turn off Wi-Fi.")
@@ -21,7 +23,7 @@ def wifi_off():
 def wifi_status():
     """Check current Wi-Fi status."""
     try:
-        result = subprocess.check_output("netsh wlan show interfaces", shell=True, text=True)
+        result = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], text=True)
         if "State" in result:
             for line in result.splitlines():
                 if "State" in line:
@@ -34,7 +36,7 @@ def wifi_status():
 def list_available_networks():
     """List all Wi-Fi networks in range."""
     try:
-        result = subprocess.check_output("netsh wlan show networks", shell=True, text=True)
+        result = subprocess.check_output(["netsh", "wlan", "show", "networks"], text=True)
         networks = []
         for line in result.splitlines():
             if "SSID" in line and "BSSID" not in line:
@@ -55,8 +57,12 @@ def list_available_networks():
 def connect_wifi(network_name, password=None):
     """Connect to a Wi-Fi network."""
     try:
+        if not network_name or not re.match(r'^[a-zA-Z0-9_\- .]+$', network_name):
+            speak("Invalid Wi-Fi network name.")
+            return
+
         # Check if already connected
-        result = subprocess.check_output("netsh wlan show interfaces", shell=True, text=True)
+        result = subprocess.check_output(["netsh", "wlan", "show", "interfaces"], text=True)
         for line in result.splitlines():
             if "SSID" in line and "BSSID" not in line:
                 connected_ssid = line.split(":")[1].strip()
@@ -72,7 +78,8 @@ def connect_wifi(network_name, password=None):
                 password = None
 
         # Create temporary profile for secured network
-        profile_file = f"{network_name}.xml"
+        safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', network_name)
+        profile_file = os.path.join(tempfile.gettempdir(), f"kamachi_wifi_{safe_name}.xml")
         profile = f"""<?xml version="1.0"?>
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
     <name>{network_name}</name>
@@ -100,8 +107,8 @@ def connect_wifi(network_name, password=None):
 </WLANProfile>"""
         with open(profile_file, "w") as f:
             f.write(profile)
-        subprocess.run(f'netsh wlan add profile filename="{profile_file}"', shell=True)
-        subprocess.run(f'netsh wlan connect name="{network_name}"', shell=True)
+        subprocess.run(["netsh", "wlan", "add", "profile", f"filename={profile_file}"], shell=False)
+        subprocess.run(["netsh", "wlan", "connect", f"name={network_name}"], shell=False)
         speak(f"Connecting to {network_name}...")
 
         # Cleanup

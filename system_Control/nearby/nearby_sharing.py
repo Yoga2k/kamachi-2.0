@@ -1,4 +1,11 @@
 import subprocess
+import os
+import shutil
+
+def _get_powershell_path():
+    return shutil.which("powershell.exe") or os.path.join(
+        os.environ.get("SystemRoot", r"C:\Windows"), "System32", "WindowsPowerShell", "v1.0", "powershell.exe"
+    )
 
 def set_nearby_sharing(mode="off"):
     """
@@ -15,16 +22,24 @@ def set_nearby_sharing(mode="off"):
     else:
         raise ValueError("Invalid mode. Use: 'off', 'mydevices', or 'everyone'.")
 
-    command = f'powershell -Command "Set-ItemProperty -Path HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\CDP\\Settings -Name NearShareChannelUserAuthzPolicy -Value {value}"'
-    subprocess.run(command, shell=True)
+    ps = _get_powershell_path()
+    command = [
+        ps, "-NoProfile", "-Command",
+        f"Set-ItemProperty -Path HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\CDP\\Settings -Name NearShareChannelUserAuthzPolicy -Value {value}"
+    ]
+    subprocess.run(command, shell=False)
 
     return f"Nearby Sharing set to {mode}"
 
 
 def get_nearby_sharing_status():
     """Check current Nearby Sharing status."""
-    command = 'powershell -Command "(Get-ItemProperty -Path HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\CDP\\Settings).NearShareChannelUserAuthzPolicy"'
-    result = subprocess.run(command, capture_output=True, text=True, shell=True)
+    ps = _get_powershell_path()
+    command = [
+        ps, "-NoProfile", "-Command",
+        "(Get-ItemProperty -Path HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\CDP\\Settings).NearShareChannelUserAuthzPolicy"
+    ]
+    result = subprocess.run(command, capture_output=True, text=True, shell=False)
 
     value = result.stdout.strip()
     if value == "0":
