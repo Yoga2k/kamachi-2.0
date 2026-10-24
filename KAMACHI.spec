@@ -6,7 +6,6 @@ block_cipher = None
 
 datas = [
     ('assets', 'assets'),
-    ('config.json', '.'),
 ]
 
 if os.path.exists('notes.txt'):

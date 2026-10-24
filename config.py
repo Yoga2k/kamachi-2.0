@@ -10,10 +10,14 @@ from pathlib import Path
 
 
 def get_app_dir() -> Path:
-    """Return persistent folder where user data and editable configs reside."""
-    if getattr(sys, 'frozen', False):
-        return Path(sys.executable).resolve().parent
-    return Path(__file__).resolve().parent
+    """Return persistent folder in user's AppData where configs and user data reside."""
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        path = Path(appdata) / "KAMACHI"
+    else:
+        path = Path.home() / "AppData" / "Roaming" / "KAMACHI"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def get_bundle_dir() -> Path:
@@ -40,12 +44,19 @@ DEFAULT_CONFIG = {
 
 
 def load_config():
-    """Load configuration from config.json with safe fallbacks and auto-seed from bundle."""
+    """Load configuration from user's AppData config.json with safe fallbacks and auto-seed."""
     if not CONFIG_FILE.exists():
-        bundled_config = BUNDLE_DIR / "config.json"
-        if bundled_config.exists() and bundled_config != CONFIG_FILE:
+        # Check project root or local directory as initial seed if available
+        local_seed = Path(__file__).resolve().parent / "config.json"
+        if local_seed.exists() and local_seed.resolve() != CONFIG_FILE.resolve():
             try:
-                shutil.copy2(bundled_config, CONFIG_FILE)
+                shutil.copy2(local_seed, CONFIG_FILE)
+            except Exception:
+                pass
+        else:
+            try:
+                with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                    json.dump(DEFAULT_CONFIG, f, indent=2)
             except Exception:
                 pass
     if not CONFIG_FILE.exists():
