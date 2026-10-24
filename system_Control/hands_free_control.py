@@ -9,8 +9,8 @@ import pyautogui
 import pyperclip
 from utils import speak
 
-# PyAutoGUI settings: disable fail-safe to prevent corner crashes in hands-free mode
-pyautogui.FAILSAFE = False
+# PyAutoGUI settings: enable fail-safe to allow emergency corner abort
+pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.05
 
 
