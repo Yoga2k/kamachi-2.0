@@ -1,10 +1,12 @@
 """
 core/safety.py — Central Safety Layer and Policy Enforcement for KAMACHI.
-Provides RiskLevel definitions and SafetyGate for validating actions.
+Provides RiskLevel definitions, protected paths/files policies, and SafetyGate.
 """
 
+import os
 from enum import Enum
-from typing import Any, Dict, Optional, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 from utils import speak, take_command
 
 
@@ -13,6 +15,75 @@ class RiskLevel(str, Enum):
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
     BLOCKED = "BLOCKED"
+
+
+PROTECTED_EXACT_FILES = {".env", "config.json"}
+PROTECTED_PREFIXES = (".env.", "password", "passwords", "id_rsa", "id_ed25519")
+PROTECTED_EXTENSIONS = {".pem", ".key", ".pfx", ".kdbx"}
+
+
+def get_protected_roots() -> List[Path]:
+    """Return list of resolved system and sensitive user roots."""
+    home = Path.home()
+    roots = [
+        Path(os.environ.get("SystemRoot", r"C:\Windows")),
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files")),
+        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")),
+        Path(os.environ.get("ProgramData", r"C:\ProgramData")),
+        home / ".ssh",
+        home / "AppData" / "Local" / "Google" / "Chrome" / "User Data",
+        home / "AppData" / "Local" / "Microsoft" / "Edge" / "User Data",
+        home / "AppData" / "Roaming" / "Mozilla" / "Firefox",
+        home / "AppData" / "Local" / "BraveSoftware",
+    ]
+    resolved = []
+    for r in roots:
+        try:
+            resolved.append(r.resolve())
+        except Exception:
+            pass
+    return resolved
+
+
+def is_path_protected(path_input: Union[str, Path]) -> Tuple[bool, str]:
+    """Check if a path or filename is protected from read, write, or delete."""
+    if not path_input:
+        return False, ""
+    p = Path(path_input)
+    name = p.name.lower()
+
+    if name in PROTECTED_EXACT_FILES:
+        return True, f"File name '{p.name}' is protected"
+    for pre in PROTECTED_PREFIXES:
+        if name.startswith(pre):
+            return True, f"File name '{p.name}' is protected"
+    if p.suffix.lower() in PROTECTED_EXTENSIONS:
+        return True, f"File extension '{p.suffix}' is protected"
+    if ".ssh" in [part.lower() for part in p.parts]:
+        return True, "Access to .ssh directory is protected"
+
+    try:
+        resolved = p.resolve()
+    except Exception:
+        resolved = p
+
+    resolved_str = str(resolved).lower()
+    for root in get_protected_roots():
+        root_str = str(root).lower()
+        if resolved_str == root_str or resolved_str.startswith(root_str + "\\"):
+            return True, f"Path is inside protected system directory '{root}'"
+
+    return False, ""
+
+
+def check_path_access(path: Union[str, Path], action: str = "access") -> bool:
+    """Convenience validator: if path is protected, notify user and return False; else True."""
+    protected, reason = is_path_protected(path)
+    if protected:
+        msg = f"Cannot {action} '{Path(path).name}': {reason}."
+        speak(msg)
+        return False
+    return True
 
 
 def confirm_prompt(prompt_text: str, input_prompt: str, required_phrase: str = "yes") -> bool:
@@ -44,6 +115,20 @@ class SafetyGate:
         """Check if action is permitted under the given risk level.
         Returns True if allowed, False if denied.
         """
+        # If details specify a target path, check path protection first
+        if details:
+            target_path = None
+            if isinstance(details, dict):
+                target_path = details.get("path") or details.get("file") or details.get("target")
+            elif isinstance(details, str) and (":\\" in details or "/" in details or "\\" in details or details.startswith(".")):
+                target_path = details
+
+            if target_path:
+                protected, reason = is_path_protected(target_path)
+                if protected:
+                    speak(f"Action '{action_name}' is blocked: {reason}.")
+                    return False
+
         if isinstance(risk, str):
             try:
                 risk = RiskLevel(risk.upper())
