@@ -5,7 +5,7 @@ import re
 import sys
 from pathlib import Path
 import config
-from utils import speak
+from utils import speak, take_command
 
 USER_WORKSPACE = config.get_app_dir() / "user_files"
 
@@ -59,8 +59,13 @@ def delete_file(file_name):
                     break
 
         if target.exists() and target.is_file():
-            target.unlink()
-            speak(f"File '{target.name}' deleted successfully.")
+            speak(f"Are you sure you want to delete {target.name}? Say yes to confirm.")
+            confirm = take_command(f"Say 'yes' to confirm deleting {target.name}:")
+            if confirm and "yes" in confirm.lower():
+                target.unlink()
+                speak(f"File '{target.name}' deleted successfully.")
+            else:
+                speak("File deletion cancelled.")
         else:
             speak(f"File '{file_name}' not found.")
     except Exception as e:

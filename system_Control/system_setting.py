@@ -219,6 +219,12 @@ def uninstall_software(command_or_name):
         speak("Invalid application name for uninstallation.")
         return
 
+    speak(f"Are you sure you want to uninstall {app_name}? Say yes to confirm.")
+    confirm = take_command(f"Say 'yes' to confirm uninstalling {app_name}:")
+    if not confirm or "yes" not in confirm.lower():
+        speak("Uninstallation cancelled.")
+        return
+
     speak(f"Starting uninstallation for {app_name}...")
     try:
         subprocess.Popen(["winget", "uninstall", app_name], shell=False)
@@ -357,6 +363,11 @@ def decrease_volume():
 
 def refresh_pc():
     """Refresh PC (restart Windows Explorer)."""
+    speak("Are you sure you want to restart Windows Explorer? Say yes to confirm.")
+    confirm = take_command("Say 'yes' to restart Explorer:")
+    if not confirm or "yes" not in confirm.lower():
+        speak("Explorer restart cancelled.")
+        return
     speak("Refreshing system...")
     try:
         subprocess.run(["taskkill", "/f", "/im", "explorer.exe"], shell=False, check=False)

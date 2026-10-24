@@ -4,7 +4,7 @@ import re
 import subprocess
 import psutil
 from pathlib import Path
-from utils import speak
+from utils import speak, take_command
 
 try:
     if hasattr(sys.stdout, "reconfigure"):
@@ -189,17 +189,18 @@ def close_application(command):
                 if exe not in allowed_exes or not re.match(r'^[a-zA-Z0-9_\-]+\.exe$', exe, re.IGNORECASE):
                     speak(f"Closing {app} is not permitted.")
                     return
-                msg = f"🔴 Closing {app.capitalize()}..."
-                print(msg)
-                speak(msg)
-                try:
-                    subprocess.run(["taskkill", "/f", "/im", exe], shell=False, check=False)
-                except Exception:
-                    pass
-            else:
-                msg = f"ℹ️ {app.capitalize()} is not running."
-                print(msg)
-                speak(msg)
+                speak(f"Are you sure you want to close {app.capitalize()}? Say yes to confirm.")
+                confirm = take_command(f"Say 'yes' to close {app.capitalize()}:")
+                if confirm and "yes" in confirm.lower():
+                    msg = f"🔴 Closing {app.capitalize()}..."
+                    print(msg)
+                    speak(msg)
+                    try:
+                        subprocess.run(["taskkill", "/f", "/im", exe], shell=False, check=False)
+                    except Exception:
+                        pass
+                else:
+                    speak(f"Closing {app.capitalize()} cancelled.")
             return
 
     msg = "❌ Application not found or cannot be closed automatically."
