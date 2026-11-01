@@ -29,7 +29,8 @@ try:
     except Exception:
         pass
     LLAMA_CPP_AVAILABLE = True
-except ImportError:
+except Exception as e:
+    logger.debug(f"llama_cpp not available or DLL missing: {e}")
     llama_cpp = None
     Llama = None
     LLAMA_CPP_AVAILABLE = False

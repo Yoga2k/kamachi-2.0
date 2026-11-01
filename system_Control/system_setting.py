@@ -442,9 +442,9 @@ def process_command(command):
         return increase_brightness()
     elif "decrease brightness" in cmd or "brightness down" in cmd:
         return decrease_brightness()
-    elif "increase volume" in cmd or "volume up" in cmd:
+    elif "increase volume" in cmd or "volume up" in cmd or ("increase" in cmd and "volume" in cmd):
         return increase_volume()
-    elif "decrease volume" in cmd or "volume down" in cmd:
+    elif "decrease volume" in cmd or "volume down" in cmd or ("decrease" in cmd and "volume" in cmd):
         return decrease_volume()
 
     # System controls

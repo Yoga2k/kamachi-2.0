@@ -215,7 +215,7 @@ class MultiLanguageManager:
         target_iso = resolved[0] if resolved else target
 
         try:
-            from deep_translator import GoogleTranslator
+            from deep_translator import GoogleTranslator  # type: ignore
             tr = GoogleTranslator(source=source_lang, target=target_iso)
             res = tr.translate(text)
             return res or text
@@ -320,6 +320,23 @@ TAMIL_EXACT_PHRASE_MAP = {
     "ஆங்கிலத்தில் பேசு": "english la pesu",
     "தமிழ்ல பேசு": "tamil la pesu",
     "தமிழில் பேசு": "tamil la pesu",
+    "இன்க்ரீஸ் தே வால்யூம்": "increase volume",
+    "டிக்ரீஸ் தே வால்யூம்": "decrease volume",
+    "இன்க்ரீஸ் வால்யூம்": "increase volume",
+    "டிக்ரீஸ் வால்யூம்": "decrease volume",
+    "வால்யூம் கூட்டு": "increase volume",
+    "வால்யூம் கூட்டுங்க": "increase volume",
+    "வால்யூம் அதிகப்படுத்து": "increase volume",
+    "வால்யூம் குறை": "decrease volume",
+    "வால்யூம் குறையுங்க": "decrease volume",
+    "சத்தத்தை கூட்டு": "increase volume",
+    "சத்தத்தை குறை": "decrease volume",
+    "சத்தம் கூட்டு": "increase volume",
+    "சத்தம் குறை": "decrease volume",
+    "இன்க்ரீஸ் தே பிரைட்னஸ்": "increase brightness",
+    "டிக்ரீஸ் தே பிரைட்னஸ்": "decrease brightness",
+    "பிரைட்னஸ் கூட்டு": "increase brightness",
+    "பிரைட்னஸ் குறை": "decrease brightness",
 }
 
 TAMIL_PHONETIC_WORD_MAP = {
@@ -334,6 +351,9 @@ TAMIL_PHONETIC_WORD_MAP = {
     "க்ளோஸ்": "close",
     "மூடு": "close",
     "தி": "",
+    "தே": "",
+    "இன்க்ரீஸ்": "increase",
+    "டிக்ரீஸ்": "decrease",
     "நோட்பேட்": "notepad",
     "வாட்ஸ்அப்": "whatsapp",
     "குரோம்": "chrome",

@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
 import sys
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
 block_cipher = None
 
@@ -13,6 +14,22 @@ datas = [
 for extra_file in ['notes.txt', 'config.json', 'COMMANDS_LIST.txt', 'VERSION']:
     if os.path.exists(extra_file):
         datas.append((extra_file, '.'))
+
+extra_binaries = []
+try:
+    datas += collect_data_files('llama_cpp')
+    extra_binaries += collect_dynamic_libs('llama_cpp')
+except Exception as e:
+    pass
+
+try:
+    import llama_cpp
+    llama_dir = os.path.dirname(llama_cpp.__file__)
+    llama_lib_dir = os.path.join(llama_dir, 'lib')
+    if os.path.exists(llama_lib_dir):
+        datas.append((llama_lib_dir, 'llama_cpp/lib'))
+except Exception as e:
+    pass
 
 hiddenimports = [
     'pyttsx3.drivers',
@@ -88,7 +105,6 @@ hiddenimports = [
     'ui.sound_effects',
     'system_Control.app_adapters',
     'system_Control.app_adapters.office_adapter',
-    'system_Control.omni_driver',
     # --- Legacy Subsystems ---
     'Education',
     'Education.coding_assist',
@@ -136,7 +152,7 @@ hiddenimports = [
 a = Analysis(
     ['run_with_avatar.py'],
     pathex=['.'],
-    binaries=[],
+    binaries=extra_binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],

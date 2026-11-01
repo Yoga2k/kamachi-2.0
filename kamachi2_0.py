@@ -195,7 +195,7 @@ def kamachi_3_0():
             "start menu", "shutdown", "network settings", "network and internet", "network", "internet",
             "wifi settings", "hotspot", "mobile hotspot", "airplane mode", "flight mode", "ethernet",
             "vpn", "proxy", "data usage", "increase the brightness", "run", "sleep",
-            "restart", "increase volume", "decrease volume", "increase brightness", "decrease brightness",
+            "restart", "increase volume", "decrease volume", "increase the volume", "decrease the volume", "volume up", "volume down", "increase brightness", "decrease brightness", "increase the brightness", "decrease the brightness",
             "refresh", "turn on bluetooth", "bluetooth", "storage settings",
             "multitasking settings", "power settings", "troubleshoot", "troubleshooter", "troubleshoot settings", "notifications settings",
             "date and time", "time settings", "personalization", "wallpaper", "background settings", "change wallpaper",
@@ -511,7 +511,12 @@ def kamachi_3_0():
         # DEFAULT / CHAT MODE
         # -----------------------------
         else:
-            handle_command(command)
+            try:
+                handle_command(command)
+            except Exception as e:
+                import logging
+                logging.getLogger("kamachi").error(f"Error handling chat command: {e}")
+                speak("I'm sorry Boss, I encountered a temporary issue with that request. What can I do for you?")
 
 
 # -----------------------------
