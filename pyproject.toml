@@ -1,0 +1,13 @@
+[project]
+name = "kamachi"
+version = "3.0.0"
+description = "KAMACHI AI 3.0 - Autonomous JARVIS Desktop Assistant"
+authors = [{ name = "Mr. Yoga" }]
+requires-python = ">=3.10"
+
+[tool.pyrefly]
+search-path = [
+    ".",
+    "kamachi/Lib/site-packages"
+]
+python-interpreter-path = "kamachi/Scripts/python.exe"

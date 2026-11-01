@@ -227,7 +227,7 @@ class MultiLanguageManager:
         Detects language of given text.
         """
         try:
-            from deep_translator import GoogleTranslator
+            from deep_translator import GoogleTranslator  # type: ignore
             tr = GoogleTranslator(source="auto", target="en")
             tr.translate(text)
             source_iso = getattr(tr, "source", "unknown")

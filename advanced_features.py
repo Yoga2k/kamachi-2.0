@@ -1,11 +1,14 @@
 import os
 import requests
-from deep_translator import GoogleTranslator
 from utils import speak, take_command
 from geopy.geocoders import Nominatim
 
-# Initialize translator globally for better performance
-translator = GoogleTranslator()
+# Initialize translator safely for better performance
+try:
+    from deep_translator import GoogleTranslator  # type: ignore
+    translator = GoogleTranslator()
+except Exception:
+    translator = None
 
 def advanced_features(command):
     """Handles various advanced assistant features."""
