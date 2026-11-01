@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAMACHI AI 3.0 — Autonomous JARVIS Desktop Assistant</title>
+    <meta name="description" content="KAMACHI 3.0 is a 100% offline, privacy-first, autonomous desktop AI assistant for Windows 10 & 11 created by Mr. Yoga. Low-latency Tamil & English speech recognition with zero cloud API keys.">
+    <link rel="icon" href="../assets/robot_avatar.ico" type="image/x-icon">
+    
+    <style>
+        :root {
+            --bg: #07090e;
+            --surface: #0e131f;
+            --surface-hover: #161f33;
+            --border: #1e293b;
+            --border-glow: #38bdf840;
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.4);
+            --accent: #818cf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #34d399;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle glowing background orbs */
+        .glow-orb {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            filter: blur(80px);
+            opacity: 0.25;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .orb-top-left { top: -100px; left: -100px; }
+        .orb-mid-right { top: 400px; right: -150px; background: radial-gradient(circle, rgba(129, 140, 248, 0.3) 0%, transparent 70%); }
+
+        /* Container */
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            color: #07090e;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .btn-nav {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .btn-nav:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 90px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+
+        .pill-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            max-width: 680px;
+            margin: 0 auto 36px;
+            font-size: 1.18rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 16px 32px;
+            border-radius: 32px;
+            text-decoration: none;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(56, 189, 248, 0.5);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 1.05rem;
+            padding: 16px 28px;
+            border-radius: 32px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+            border-color: #475569;
+        }
+
+        .release-specs {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .release-specs span strong {
+            color: var(--text-main);
+        }
+
+        /* Feature Cards */
+        .features {
+            padding: 80px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: rgba(56, 189, 248, 0.35);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 18px;
+            display: inline-block;
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Installation Steps */
+        .installation {
+            padding: 80px 0;
+            background: rgba(14, 19, 31, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .step-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            position: relative;
+        }
+
+        .step-num {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 14px;
+        }
+
+        .step-box h4 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .step-box p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Commands preview box */
+        .commands-box {
+            margin-top: 60px;
+            background: #020617;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+
+        .terminal-content {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: #38bdf8;
+            line-height: 1.8;
+        }
+        .terminal-content span.cmd {
+            color: #f1f5f9;
+        }
+        .terminal-content span.resp {
+            color: #64748b;
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.4rem; }
+            .hero p { font-size: 1rem; }
+            .nav-links { display: none; }
+            .release-specs { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow-orb orb-top-left"></div>
+    <div class="glow-orb orb-mid-right"></div>
+
+    <div class="container">
+        <!-- Navigation -->
+        <nav>
+            <a href="#" class="brand">
+                🤖 KAMACHI AI
+                <span class="brand-badge">v3.0</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#install">Installation</a>
+                <a href="#commands">Commands</a>
+                <a href="https://github.com/Yoga2k/kamachi-2.0" target="_blank">GitHub</a>
+            </div>
+            <a href="https://github.com/Yoga2k/kamachi-2.0/releases/download/v3.0/KAMACHI_v3.0_Windows.zip" class="btn-nav">
+                Download .ZIP
+            </a>
+        </nav>
+
+        <!-- Hero -->
+        <header class="hero">
+            <div class="pill-badge">
+                <div class="pill-pulse"></div>
+                v3.0 Official Release Live on GitHub
+            </div>
+
+            <h1>Autonomous JARVIS<br>Desktop Assistant for PC</h1>
+
+            <p>
+                100% offline, privacy-first AI companion for Windows 10 & 11. 
+                Sub-second speech recognition in Tamil & English, deep hardware diagnostics, 
+                and autonomous hands-free app control without needing cloud API keys.
+            </p>
+
+            <div class="hero-actions">
+                <a href="https://github.com/Yoga2k/kamachi-2.0/releases/download/v3.0/KAMACHI_v3.0_Windows.zip" class="btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download for Windows (101 MB)
+                </a>
+
+                <a href="https://github.com/Yoga2k/kamachi-2.0/releases/tag/v3.0" target="_blank" class="btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                    </svg>
+                    View Release on GitHub
+                </a>
+            </div>
+
+            <div class="release-specs">
+                <span>Platform: <strong>Windows 10 / 11 (64-bit)</strong></span>
+                <span>Type: <strong>Standalone .exe (No Python Required)</strong></span>
+                <span>Version: <strong>v3.0.0</strong></span>
+            </div>
+        </header>
+
+        <!-- Features -->
+        <section class="features" id="features">
+            <div class="section-header">
+                <h2>Engineered for Zero-Latency Local Intelligence</h2>
+                <p>Everything runs on your local machine. No external servers. No subscriptions.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3>100% Offline & Keyless</h3>
+                    <p>Zero Gemini or OpenAI API keys required. Pure local inference, rule engines, and offline conversational memory.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🗣️</div>
+                    <h3>Sub-Second Dual Speech</h3>
+                    <p>Instant speech recognition with dual Tamil (ta-IN) and Indian English (en-IN) phonetic mapping and automatic language switching.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🤖</div>
+                    <h3>Companion Avatar UI</h3>
+                    <p>Floating desktop robot companion widget that speaks, listens, and animates real-time assistant status.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">📊</div>
+                    <h3>Hardware Diagnostics</h3>
+                    <p>Real-time voice reporting for RAM usage, CPU load, hard disk storage, battery health, and system security.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🎮</div>
+                    <h3>Hands-Free PC Control</h3>
+                    <p>Launch apps (Chrome, Notepad, VS Code), manage volume, brightness, windows, and scrolling completely hands-free.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🛡️</div>
+                    <h3>100% Privacy-First</h3>
+                    <p>Your audio and system data never leave your PC. Total local execution guaranteed under Proprietary License.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation -->
+        <section class="installation" id="install">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Quick 3-Step Setup</h2>
+                    <p>No Python, dependencies, or developer tools needed.</p>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step-box">
+                        <span class="step-num">STEP 01</span>
+                        <h4>Download Archive</h4>
+                        <p>Download <code>KAMACHI_v3.0_Windows.zip</code> from GitHub (101 MB).</p>
+                    </div>
+
+                    <div class="step-box">
+                        <span class="step-num">STEP 02</span>
+                        <h4>Extract ZIP</h4>
+                        <p>Right-click the downloaded file and choose <strong>Extract All</strong> to any folder.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <span class="step-num">STEP 03</span>
+                        <h4>Launch KAMACHI.exe</h4>
+                        <p>Double-click <strong>KAMACHI.exe</strong> (or <code>Launch_KAMACHI.bat</code>). Speak into your mic!</p>
+                    </div>
+                </div>
+
+                <!-- Sample Commands Terminal -->
+                <div class="commands-box" id="commands">
+                    <div class="terminal-header">
+                        <div class="terminal-dot dot-red"></div>
+                        <div class="terminal-dot dot-yellow"></div>
+                        <div class="terminal-dot dot-green"></div>
+                    </div>
+                    <div class="terminal-content">
+                        <div>&gt; <span class="cmd">"வணக்கம்" (Hello / Vanakkam)</span></div>
+                        <div class="resp"># Output: "வணக்கமுங்க! நான் காமாட்சி 3.0. உங்களுக்கு எப்படி உதவட்டும்?"</div>
+                        <br>
+                        <div>&gt; <span class="cmd">"Ram status" / "ராம் ஸ்டேட்டஸ்"</span></div>
+                        <div class="resp"># Output: "RAM Usage is at 42.5%. Available memory is 9.2 Gigabytes."</div>
+                        <br>
+                        <div>&gt; <span class="cmd">"இன்க்ரீஸ் தே வால்யூம்" (Increase the volume)</span></div>
+                        <div class="resp"># Output: "Volume increased." [Hardware volume keys dispatched]</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="container">
+                <p>
+                    <strong>KAMACHI AI 3.0</strong> • Created by <strong>Mr. Yoga</strong>
+                </p>
+                <p style="margin-top: 8px; font-size: 0.85rem;">
+                    Official Domain: <a href="https://kamachi.ai.studio" target="_blank">kamachi.ai.studio</a> • 
+                    <a href="https://github.com/Yoga2k/kamachi-2.0" target="_blank">GitHub Repository</a> • 
+                    Proprietary Software (All Rights Reserved)
+                </p>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
