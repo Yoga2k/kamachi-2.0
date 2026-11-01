@@ -11,3 +11,4 @@ search-path = [
     "kamachi/Lib/site-packages"
 ]
 python-interpreter-path = "kamachi/Scripts/python.exe"
+
