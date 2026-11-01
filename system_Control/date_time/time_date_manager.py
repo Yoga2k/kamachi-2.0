@@ -2,6 +2,7 @@ import datetime
 import subprocess
 import re
 from utils import speak
+from core.safety import check as safety_check, RiskLevel
 
 # ------------------------------
 # 📌 Time & Date Functions
@@ -56,6 +57,10 @@ def set_date(new_date: str):
     if not re.match(r'^\d{2}[-/]\d{2}[-/]\d{4}$', clean_date):
         speak("Invalid date format. Expected MM-DD-YYYY.")
         return
+    # SafetyGate: HIGH risk for changing system date
+    if not safety_check("change system date", RiskLevel.HIGH,
+                        f"set system date to {clean_date}"):
+        return
     try:
         subprocess.run(["cmd.exe", "/c", "date", clean_date], shell=False)
         speak(f"Date has been set to {clean_date}.")
@@ -71,6 +76,10 @@ def set_time(new_time: str):
     clean_time = (new_time or "").strip()
     if not re.match(r'^\d{1,2}:\d{2}(?::\d{2})?$', clean_time):
         speak("Invalid time format. Expected HH:MM or HH:MM:SS.")
+        return
+    # SafetyGate: HIGH risk for changing system time
+    if not safety_check("change system time", RiskLevel.HIGH,
+                        f"set system time to {clean_time}"):
         return
     try:
         subprocess.run(["cmd.exe", "/c", "time", clean_time], shell=False)

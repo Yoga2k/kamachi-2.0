@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 import config
 from utils import speak, take_command
+from core.safety import check as safety_check, check_path_access, RiskLevel
 
 USER_WORKSPACE = config.get_app_dir() / "user_files"
 
@@ -59,13 +60,14 @@ def delete_file(file_name):
                     break
 
         if target.exists() and target.is_file():
-            speak(f"Are you sure you want to delete {target.name}? Say yes to confirm.")
-            confirm = take_command(f"Say 'yes' to confirm deleting {target.name}:")
-            if confirm and "yes" in confirm.lower():
-                target.unlink()
-                speak(f"File '{target.name}' deleted successfully.")
-            else:
-                speak("File deletion cancelled.")
+            # SafetyGate: block protected paths, then MEDIUM confirmation
+            if not check_path_access(target, "delete"):
+                return
+            if not safety_check(f"delete file '{target.name}'", RiskLevel.MEDIUM,
+                                {"path": str(target)}):
+                return
+            target.unlink()
+            speak(f"File '{target.name}' deleted successfully.")
         else:
             speak(f"File '{file_name}' not found.")
     except Exception as e:
@@ -79,6 +81,11 @@ def rename_item(old_name, new_name):
         new_target = _resolve_target_path(new_name)
         if not old_target or not old_target.exists():
             speak(f"The file or folder '{old_name}' does not exist.")
+            return
+        # SafetyGate: block renaming protected paths
+        if not check_path_access(old_target, "rename"):
+            return
+        if not check_path_access(new_target, "rename to"):
             return
         old_target.rename(new_target)
         speak(f"'{old_target.name}' has been renamed to '{new_target.name}'.")

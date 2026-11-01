@@ -5,6 +5,7 @@ import subprocess
 import psutil
 from pathlib import Path
 from utils import speak, take_command
+from core.safety import check as safety_check, RiskLevel
 
 try:
     if hasattr(sys.stdout, "reconfigure"):
@@ -36,6 +37,8 @@ APP_TARGETS = {
     "zoom": "Zoom.exe",
     "discord": "Discord.exe",
     "file explorer": "explorer.exe",
+    "file manager": "explorer.exe",
+    "files": "explorer.exe",
     "control panel": "control",
     "memory diagnostic": "mdsched.exe",
     "wireless display": "displayswitch.exe",
@@ -45,6 +48,20 @@ APP_TARGETS = {
     "documents": "documents",
     "pictures": "pictures",
     "desktop": "desktop",
+    "vs code": "code",
+    "vscode": "code",
+    "code": "code",
+    "paint": "mspaint.exe",
+    "cmd": "cmd.exe",
+    "command prompt": "cmd.exe",
+    "terminal": "wt.exe",
+    "powershell": "powershell.exe",
+    "task manager": "taskmgr.exe",
+    "settings": "ms-settings:",
+    "camera": "microsoft.windows.camera:",
+    "clock": "ms-clock:",
+    "store": "ms-windows-store:",
+    "microsoft store": "ms-windows-store:",
 }
 
 
@@ -102,6 +119,12 @@ def resolve_app(app_key):
     if app_key == "whatsapp":
         return "whatsapp:"
 
+    # 5. Check Windows PATH for executable (e.g. git, python, code, npm)
+    import shutil
+    which_target = shutil.which(app_key) or shutil.which(f"{app_key}.exe")
+    if which_target:
+        return which_target
+
     return None
 
 
@@ -137,6 +160,18 @@ def open_application(command):
             cmd_clean = cmd_clean[len(prefix):].strip()
             break
 
+    # Check if command is targeting a website (e.g. facebook.com, youtube, etc.)
+    import webbrowser
+    web_domains = [".com", ".org", ".net", ".io", ".in", ".co", ".edu", ".gov"]
+    clean_target = cmd_clean.replace("the ", "").replace("my ", "").strip()
+    if any(ext in clean_target for ext in web_domains) or any(site in clean_target for site in ["facebook", "youtube", "instagram", "twitter", "reddit", "linkedin", "github"]):
+        url = clean_target if clean_target.startswith("http") else f"https://{clean_target}"
+        if not any(ext in url for ext in web_domains):
+            url += ".com"
+        speak(f"Opening {clean_target}...")
+        webbrowser.open(url)
+        return
+
     all_keys = sorted(list(APP_TARGETS.keys()) + ["whatsapp", "settings"], key=len, reverse=True)
     for app in all_keys:
         if app in cmd_clean or app in command.lower():
@@ -161,10 +196,20 @@ def open_application(command):
                 if os.path.isdir(target):
                     subprocess.Popen(["explorer.exe", target], shell=False)
                 else:
-                    try:
-                        os.startfile(target)
-                    except Exception:
-                        subprocess.Popen(["cmd.exe", "/c", "start", "", target], shell=False)
+                    if app == "whatsapp":
+                        try:
+                            os.startfile("whatsapp:")
+                        except Exception:
+                            try:
+                                subprocess.Popen(["explorer.exe", "shell:appsFolder\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App"], shell=False)
+                            except Exception:
+                                import webbrowser
+                                webbrowser.open("https://web.whatsapp.com")
+                    else:
+                        try:
+                            os.startfile(target)
+                        except Exception:
+                            subprocess.Popen(["cmd.exe", "/c", "start", "", target], shell=False)
             except Exception as e:
                 print(f"⚠️ Error opening {app}: {e}")
                 speak(f"Could not open {app}.")
@@ -176,7 +221,20 @@ def open_application(command):
 
 
 def close_application(command):
-    """Closes an application based on the command."""
+    """Closes an application, tab, or window based on the command."""
+    lower_cmd = command.lower()
+    try:
+        import pyautogui
+        if "tab" in lower_cmd:
+            speak("Closing current tab.")
+            pyautogui.hotkey('ctrl', 'w')
+            return
+        if "window" in lower_cmd and "windows" not in lower_cmd:
+            speak("Closing current window.")
+            pyautogui.hotkey('alt', 'f4')
+            return
+    except Exception:
+        pass
     cmd_clean = command.lower().replace("close the ", "").replace("terminate ", "").replace("shut down ", "").strip()
 
     # Allowed executables whitelist from known targets
@@ -189,18 +247,17 @@ def close_application(command):
                 if exe not in allowed_exes or not re.match(r'^[a-zA-Z0-9_\-]+\.exe$', exe, re.IGNORECASE):
                     speak(f"Closing {app} is not permitted.")
                     return
-                speak(f"Are you sure you want to close {app.capitalize()}? Say yes to confirm.")
-                confirm = take_command(f"Say 'yes' to close {app.capitalize()}:")
-                if confirm and "yes" in confirm.lower():
-                    msg = f"🔴 Closing {app.capitalize()}..."
-                    print(msg)
-                    speak(msg)
-                    try:
-                        subprocess.run(["taskkill", "/f", "/im", exe], shell=False, check=False)
-                    except Exception:
-                        pass
-                else:
-                    speak(f"Closing {app.capitalize()} cancelled.")
+                # SafetyGate: MEDIUM risk for force-closing an app
+                if not safety_check(f"force-close {app.capitalize()}", RiskLevel.MEDIUM,
+                                    f"taskkill /f /im {exe}"):
+                    return
+                msg = f"🔴 Closing {app.capitalize()}..."
+                print(msg)
+                speak(msg)
+                try:
+                    subprocess.run(["taskkill", "/f", "/im", exe], shell=False, check=False)
+                except Exception:
+                    pass
             return
 
     msg = "❌ Application not found or cannot be closed automatically."

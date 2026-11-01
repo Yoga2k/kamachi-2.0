@@ -18,6 +18,13 @@ import sys
 import threading
 from pathlib import Path
 
+# Early initialization of GGUF/llama backend before any COM / audio / GUI subsystems
+try:
+    import llama_cpp
+    llama_cpp.llama_backend_init()
+except Exception:
+    pass
+
 import avatar_ui
 import kamachi2_0
 

@@ -3,8 +3,12 @@ import sys
 import re
 import subprocess
 import pyautogui
-import screen_brightness_control as sbc
+try:
+    import screen_brightness_control as sbc
+except Exception:
+    sbc = None
 from utils import speak, take_command
+from core.safety import check as safety_check, RiskLevel
 
 # Universal Windows System Paths across ALL Windows PCs (Windows 10, 11, any drive letter)
 system_root = os.environ.get("SystemRoot", r"C:\Windows")
@@ -190,6 +194,11 @@ def install_software(command_or_name):
         speak("Invalid application name for installation.")
         return
 
+    # SafetyGate: MEDIUM risk for installing software
+    if not safety_check(f"install '{app_name}'", RiskLevel.MEDIUM,
+                        f"install application {app_name}"):
+        return
+
     speak(f"Starting installation process for {app_name}...")
     print(f"[App Manager] Installing: {app_name}")
 
@@ -219,10 +228,9 @@ def uninstall_software(command_or_name):
         speak("Invalid application name for uninstallation.")
         return
 
-    speak(f"Are you sure you want to uninstall {app_name}? Say yes to confirm.")
-    confirm = take_command(f"Say 'yes' to confirm uninstalling {app_name}:")
-    if not confirm or "yes" not in confirm.lower():
-        speak("Uninstallation cancelled.")
+    # SafetyGate: HIGH risk for uninstalling software
+    if not safety_check(f"uninstall '{app_name}'", RiskLevel.HIGH,
+                        f"uninstall application {app_name}"):
         return
 
     speak(f"Starting uninstallation for {app_name}...")
@@ -363,10 +371,9 @@ def decrease_volume():
 
 def refresh_pc():
     """Refresh PC (restart Windows Explorer)."""
-    speak("Are you sure you want to restart Windows Explorer? Say yes to confirm.")
-    confirm = take_command("Say 'yes' to restart Explorer:")
-    if not confirm or "yes" not in confirm.lower():
-        speak("Explorer restart cancelled.")
+    # SafetyGate: HIGH risk for restarting Explorer
+    if not safety_check("restart Windows Explorer", RiskLevel.HIGH,
+                        "restart explorer.exe — may cause data loss in open dialogs"):
         return
     speak("Refreshing system...")
     try:
@@ -378,24 +385,22 @@ def refresh_pc():
 
 def shutdown():
     """Shutdown PC with confirmation."""
-    speak("Are you sure you want to shut down your computer? Say yes to confirm.")
-    confirm = take_command("Say 'yes' to confirm shutdown:")
-    if confirm and "yes" in confirm.lower():
-        speak("Shutting down the computer in 3 seconds...")
-        subprocess.Popen(["shutdown", "/s", "/t", "3"], shell=False)
-    else:
-        speak("Shutdown cancelled.")
+    # SafetyGate: HIGH risk for shutdown
+    if not safety_check("shut down computer", RiskLevel.HIGH,
+                        "shutdown PC — all unsaved work will be lost"):
+        return
+    speak("Shutting down the computer in 3 seconds...")
+    subprocess.Popen(["shutdown", "/s", "/t", "3"], shell=False)
 
 
 def restart():
     """Restart PC with confirmation."""
-    speak("Are you sure you want to restart your computer? Say yes to confirm.")
-    confirm = take_command("Say 'yes' to confirm restart:")
-    if confirm and "yes" in confirm.lower():
-        speak("Restarting the computer in 3 seconds...")
-        subprocess.Popen(["shutdown", "/r", "/t", "3"], shell=False)
-    else:
-        speak("Restart cancelled.")
+    # SafetyGate: HIGH risk for restart
+    if not safety_check("restart computer", RiskLevel.HIGH,
+                        "restart PC — all unsaved work will be lost"):
+        return
+    speak("Restarting the computer in 3 seconds...")
+    subprocess.Popen(["shutdown", "/r", "/t", "3"], shell=False)
 
 
 # ==========================================
@@ -406,16 +411,16 @@ def process_command(command):
     """Recognize and execute any system control or settings command."""
     cmd = command.lower().strip()
 
-    # Hardware diagnostics
-    if any(k in cmd for k in ["ram status", "ram usage", "how much ram", "check ram", "ram"]):
+    # Hardware diagnostics (with word-boundary regex to prevent 'open instagram' triggering ram)
+    if any(k in cmd for k in ["ram status", "ram usage", "how much ram", "check ram", "ராம்", "ரேம்"]) or re.search(r'\bram\b', cmd):
         return ram_status()
-    elif any(k in cmd for k in ["cpu status", "cpu usage", "processor status", "cpu load", "cpu"]):
+    elif any(k in cmd for k in ["cpu status", "cpu usage", "processor status", "cpu load", "சிபியு", "ப்ராசசர்", "ப்ராசஸர்"]) or re.search(r'\bcpu\b', cmd):
         return cpu_status()
-    elif any(k in cmd for k in ["disk status", "disk space", "storage space", "free space", "hard disk", "c drive"]):
+    elif any(k in cmd for k in ["disk status", "disk space", "storage space", "free space", "hard disk", "c drive", "டிஸ்க்", "ஸ்டோரேஜ்"]) or re.search(r'\bdisk\b', cmd):
         return disk_status()
     elif any(k in cmd for k in ["system summary", "system diagnostics", "system health", "specs", "pc specs"]):
         return system_summary()
-    elif any(k in cmd for k in ["battery status", "power status", "battery percentage", "battery"]):
+    elif any(k in cmd for k in ["battery status", "power status", "battery percentage", "பேட்டரி"]) or re.search(r'\bbattery\b', cmd):
         return battery_status()
 
     # Antivirus & Threat Detection

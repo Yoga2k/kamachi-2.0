@@ -31,19 +31,22 @@ env/
 ENV/
 .env
 
-# Editor / IDE configs
+# Editor / IDE / Agent configs
 .vscode/
 .idea/
+.gemini/
+.agent/
+.agents/
+.gsd/
 
 # Windows desktop / thumbnail files
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Logs
+# Logs & Local Storage
 *.log
 system_Control/*.log
-config.json
 storage/
 Screenshorts/
 *.db

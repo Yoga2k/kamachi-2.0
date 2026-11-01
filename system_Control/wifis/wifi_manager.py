@@ -3,6 +3,7 @@ import os
 import re
 import tempfile
 from utils import speak, take_command
+from core.safety import check as safety_check, RiskLevel
 
 def wifi_on():
     """Turn Wi-Fi ON."""
@@ -14,10 +15,9 @@ def wifi_on():
 
 def wifi_off():
     """Turn Wi-Fi OFF."""
-    speak("Are you sure you want to turn off Wi-Fi? Say yes to confirm.")
-    confirm = take_command("Say 'yes' to turn off Wi-Fi:")
-    if not confirm or "yes" not in confirm.lower():
-        speak("Wi-Fi turn off cancelled.")
+    # SafetyGate: MEDIUM risk for turning off Wi-Fi
+    if not safety_check("turn off Wi-Fi", RiskLevel.MEDIUM,
+                        "disable wireless network adapter"):
         return
     try:
         subprocess.run(["netsh", "interface", "set", "interface", "Wi-Fi", "disabled"], shell=False)

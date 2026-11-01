@@ -34,7 +34,44 @@ def fetch_weather(city_query=None):
             break
 
     if not city:
-        city = config.get_config("weather_city", "Gudiyatham, Vellore")
+        city = config.get_config("weather_city", "current_location")
+
+    is_auto = city.lower() in ("current_location", "auto", "current location", "here", "live", "my location", "current")
+
+    if is_auto:
+        speak("Fetching weather for your current location...")
+        try:
+            url = "https://wttr.in?format=j1"
+            res = requests.get(url, timeout=5, headers={"User-Agent": "curl/7.68.0"})
+            if res.status_code == 200:
+                data = res.json()
+                area = data.get("nearest_area", [{}])[0]
+                detected_city = area.get("areaName", [{}])[0].get("value", "")
+                current = data.get("current_condition", [{}])[0]
+                temp_c = current.get("temp_C", "")
+                feels_like = current.get("FeelsLikeC", "")
+                desc = current.get("weatherDesc", [{}])[0].get("value", "")
+                humidity = current.get("humidity", "")
+
+                place_label = f"your current location in {detected_city}" if detected_city else "your current location"
+                if temp_c:
+                    msg = f"At {place_label}, it is currently {temp_c}°C and {desc}."
+                    if feels_like and feels_like != temp_c:
+                        msg += f" Feels like {feels_like}°C."
+                    if humidity:
+                        msg += f" Humidity is {humidity}%."
+                    print(f"[Weather] {msg}")
+                    speak(msg)
+                    return msg
+        except Exception:
+            pass
+
+        try:
+            resp = requests.get("https://ipinfo.io/json", timeout=4)
+            if resp.status_code == 200:
+                city = resp.json().get("city", "Chennai")
+        except Exception:
+            city = "Chennai"
 
     speak(f"Fetching current weather for {city}...")
 
@@ -111,9 +148,9 @@ def web_and_online_features(command):
             except Exception:
                 speak("Unable to fetch news right now.")
 
-        # 🔎 Google Search
-        elif "search google for" in command:
-            query = command.replace("search google for", "").strip()
+        # 🔎 Google Search (handles 'search X in google', 'search google for X', 'search for X on google')
+        elif ("search google for" in command) or ("search" in command and ("in google" in command or "on google" in command or "google" in command)):
+            query = command.replace("search google for", "").replace("search on google for", "").replace("search in google for", "").replace("search for", "").replace("search", "").replace("in google", "").replace("on google", "").strip()
             if query:
                 speak(f"Searching Google for {query}")
                 webbrowser.open(f"https://www.google.com/search?q={query}")
@@ -136,7 +173,7 @@ def web_and_online_features(command):
                     play_first_youtube_video(query)
 
         # 🔥 Trending YouTube Videos
-        elif "trending youtube videos" in command:
+        elif any(k in command for k in ["trending youtube videos", "trending videos", "trending video", "trending on youtube"]):
             fetch_trending_youtube_videos()
 
         # 🌍 Open Website Shortcut

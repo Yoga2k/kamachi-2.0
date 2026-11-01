@@ -1,35 +1,37 @@
-# --- Voice / Text-to-Speech ---
+# =========================================================
+# KAMACHI 2.0 — Autonomous JARVIS Desktop AI Requirements
+# =========================================================
+
+# --- Voice / Speech Recognition & Text-to-Speech ---
 pyttsx3
 SpeechRecognition
-pywin32          # win32com.client used in utils.py (Windows only)
-
-# --- Audio input (required by speech_recognition for microphone access) ---
+pywin32
 PyAudio
 
-# --- Entertainment / Media ---
-pywhatkit
-
-# --- Location & Translation ---
-geopy
-deep-translator   # advanced_features.py uses deep_translator, NOT googletrans
-langdetect        # optional: improves language auto-detection in language_manager.py
-
-# --- Web / Networking ---
+# --- AI & Knowledge Base ---
+google-generativeai
+wikipedia
 requests
 beautifulsoup4
-googlesearch-python   # web.py: "from googlesearch import search"
+googlesearch-python
 
-# --- System Control ---
+# --- Multi-Language & Translation ---
+geopy
+deep-translator
+langdetect
+pyperclip
+
+# --- System Control, Vision & Automation ---
 screen-brightness-control
 psutil
 pyautogui
+Pillow
 plyer
-pywinauto         # call.py, alarm_manager.py (Windows UI automation)
+pywinauto
+pywhatkit
 
-# --- Math ---
+# --- Math & Symbolic Computation ---
 sympy
 
-# --- Desktop avatar widget ---
+# --- Desktop UI & HUD ---
 PyQt5
-
-# --- Notifications (already listed above via plyer) ---

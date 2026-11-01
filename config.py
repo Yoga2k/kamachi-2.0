@@ -10,7 +10,9 @@ from pathlib import Path
 
 
 def get_app_dir() -> Path:
-    """Return persistent folder in user's AppData where configs and user data reside."""
+    """Return persistent folder where configs and user data reside (project root in dev, AppData when frozen)."""
+    if not getattr(sys, 'frozen', False):
+        return Path(__file__).resolve().parent
     appdata = os.environ.get("APPDATA")
     if appdata:
         path = Path(appdata) / "KAMACHI"
@@ -36,10 +38,15 @@ DEFAULT_CONFIG = {
     "assistant_name": "KAMACHI",
     "version": "3.0",
     "default_call_contact": "Amma",
-    "weather_city": "Gudiyatham, Vellore",
-    "speech_rate": 150,
+    "weather_city": "current_location",
+    "speech_rate": 135,
     "speech_volume": 1.0,
-    "default_input_mode": "voice"
+    "voice_name": "Microsoft Zira Desktop - English (United States)",
+    "voice_index": 2,
+    "voice_gender": "female",
+    "voice_persona": "default",
+    "default_input_mode": "voice",
+    "local_llm_engine": "gguf"
 }
 
 

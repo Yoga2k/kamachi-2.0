@@ -3,7 +3,10 @@ import webbrowser
 import datetime
 import os
 import re
-import pywhatkit
+try:
+    import pywhatkit
+except Exception:
+    pywhatkit = None
 
 # Import voice functions
 from utils import speak, take_command
@@ -19,16 +22,62 @@ def basic_greeting(command):
     current_time = datetime.datetime.now().hour
     time_greeting = "Good morning" if current_time < 12 else "Good afternoon" if current_time < 18 else "Good evening"
 
-    greetings = [
-        f"{time_greeting}, {user_name}! How can I assist you today?",
-        f"Hello, {user_name}! What can I do for you?",
-        f"Hey there, {user_name}! How can I assist you?"
-    ]
+    # Support Tamil, Tanglish, and English greetings
+    tamil_greetings = ["vanakkam", "vanakam", "வணக்கம்", "வணக்கமுங்க", "காலை வணக்கம்", "மாலை வணக்கம்"]
+    if any(greet in command for greet in tamil_greetings):
+        speak(f"Vanakkam {user_name}! How can I assist you today?")
+        return True
 
-    if any(greet in command for greet in ["hi","hello", "hey", "good morning", "good afternoon", "good evening"]):
+    english_greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "namaste", "namaskaram"]
+    if any(greet in command for greet in english_greetings):
+        greetings = [
+            f"{time_greeting}, {user_name}! How can I assist you today?",
+            f"Hello, {user_name}! What can I do for you?",
+            f"Hey there, {user_name}! How can I assist you?"
+        ]
         response = random.choice(greetings)
         speak(response)
         return True
+    return False
+
+
+def tanglish_conversations(command):
+    """High-speed native conversational response for common Tamil & Tanglish daily phrases."""
+    cmd = command.lower().strip()
+
+    # How are you
+    if any(k in cmd for k in ["how are you", "how r u", "epdi iruka", "eppadi iruka", "eppadi irukinga", "eppadi irukeenga", "எப்படி இருக்கீங்க", "எப்படி இருக்க", "nalla irukiya"]):
+        speak("I am doing fantastic, thank you! Ready to help you with anything you need Boss.")
+        return True
+
+    # What are you doing
+    if any(k in cmd for k in ["what are you doing", "what r u doing", "enna panra", "enna pandra", "என்ன பண்ற", "என்ன செய்கிறாய்"]):
+        speak("I'm right here on your desktop, monitoring your system and ready for your commands Boss!")
+        return True
+
+    # Creator
+    if any(k in cmd for k in ["who created you", "who made you", "yar unna create pana", "yar un creator", "உன்னை உருவாக்கியது யார்", "unnai uruvakiyathu yaar"]):
+        creator = config.get_config("user_name", "Mr. Yoga")
+        speak(f"I was created by {creator} to be your personal JARVIS-like AI companion.")
+        return True
+
+    # Identity / Name
+    if any(k in cmd for k in ["un peyar enna", "un name enna", "உன் பெயர் என்ன", "யார் நீ", "who are you"]):
+        name = config.get_config("assistant_name", "KAMACHI")
+        version = config.get_config("version", "3.0")
+        speak(f"My name is {name} {version}, your autonomous desktop assistant created by Mr. Yoga.")
+        return True
+
+    # Thank you
+    if any(k in cmd for k in ["thank you", "thanks", "nandri", "நன்றி", "romba nandri"]):
+        speak("You're very welcome Boss! Always happy to help.")
+        return True
+
+    # Have you eaten
+    if any(k in cmd for k in ["saptiya", "saptingala", "சாப்பிட்டியா", "சாப்பிட்டீங்களா", "have you eaten"]):
+        speak("I run on electricity and code Boss, but thank you for your kind care! Neenga saapteengala?")
+        return True
+
     return False
 
 # -------------------- About ChatGPT -------------------- #
@@ -38,7 +87,7 @@ def about_chatgpt(command):
         "who are you": "I am KAMACHI, your AI personal assistant.",
         "what are you": "I am here to assist you.",
         "what can you do": "I can perform tasks, answer questions, and control your PC. For example, you can say 'increase volume'.",
-        "are you really ai": "Yes, I'm an artificial intelligence created by OpenAI."
+        "are you really ai": "Yes, I am KAMACHI, your personal JARVIS-like AI created by Mr. Yoga."
     }
     
     for key, value in responses.items():
@@ -69,10 +118,19 @@ def play_music(command):
 
         speak(f"Playing {query} for you on YouTube!")
         try:
-            pywhatkit.playonyt(query)
+            if pywhatkit is not None:
+                pywhatkit.playonyt(query)
+                return True
+        except Exception:
+            pass
+        # Reliable fallback: open YouTube directly in browser
+        try:
+            import webbrowser
+            import urllib.parse
+            webbrowser.open(f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}")
             return True
         except Exception as e:
-            speak(f"Failed to play {query} on YouTube: {e}")
+            speak(f"Could not open YouTube: {e}")
             return False
     return False
 
@@ -211,6 +269,7 @@ def handle_command(command):
 
     handlers = [
         basic_greeting,
+        tanglish_conversations,
         about_chatgpt,
         help_requests,
         play_music,

@@ -1,9 +1,36 @@
+# Early initialization of GGUF/llama backend before any COM / audio / GUI subsystems
+try:
+    import llama_cpp
+    llama_cpp.llama_backend_init()
+except Exception:
+    pass
+
+import re
+import threading
+
+def _prewarm_local_ai():
+    """Pre-warms local GGUF model in background thread for zero-latency first response."""
+    try:
+        from ai.local_llm import get_local_llm
+        llm = get_local_llm()
+        if llm.is_available():
+            # Touch runner to keep weights mapped in memory
+            from ai.gguf_runner import get_gguf_runner
+            runner = get_gguf_runner()
+            runner._ensure_brain_loaded()
+    except Exception:
+        pass
+
+# Launch background warm-up immediately
+threading.Thread(target=_prewarm_local_ai, daemon=True).start()
+
 from assistant_conversations import handle_command
 from file_management import handle_files
 from utils import speak, take_command, choose_input_mode,change_voice
 from web import web_and_online_features
 from language_manager import language_features
 from advanced_features import advanced_features
+from payment_gateway import voice_payment_control
 from productivity import productivity_features
 from Education.coding_assist import programming_help
 from Education.social import tamil_nadu_info, andhra_pradesh_info
@@ -74,10 +101,26 @@ def time_date_fallback(command):
 # Helper: Command Matcher
 # -----------------------------
 def match_command(command, keywords):
+    """
+    High-accuracy command matcher with regex word boundary support.
+    Prevents substring collisions (e.g. 'ram' matching 'open instagram').
+    """
     if not command:
         return False
-    command = command.lower()
-    return any(keyword in command for keyword in keywords)
+    cmd = command.lower()
+    for keyword in keywords:
+        kw = keyword.lower().strip()
+        if not kw:
+            continue
+        # Multi-word phrase or special symbol (+, -, /)
+        if " " in kw or not kw.isalnum():
+            if kw in cmd:
+                return True
+        else:
+            # Single word: enforce word boundary \b to prevent collision
+            if re.search(r'\b' + re.escape(kw) + r'\b', cmd):
+                return True
+    return False
 
 
 # -----------------------------
@@ -99,6 +142,11 @@ def kamachi_3_0():
             continue
 
         command = command.strip().lower()
+        try:
+            from voice.multi_language import normalize_spoken_command
+            command = normalize_spoken_command(command)
+        except Exception:
+            pass
 
         # Exit / Stop / Close condition
         if any(k in command for k in [
@@ -118,10 +166,30 @@ def kamachi_3_0():
             continue
 
         # -----------------------------
+        # JARVIS 2.0 AUTONOMOUS DISPATCHER (WhatsApp, Scheduler, Memory, Email, CodeGen, Website, Vision, HUD)
+        # -----------------------------
+        try:
+            from core.nlu_engine import get_nlu_engine
+            from core.command_dispatcher import get_dispatcher
+            _nlu_intents = get_nlu_engine().classify(command)
+            _jarvis_intents = {
+                "send_whatsapp", "open_whatsapp", "schedule_daily_whatsapp",
+                "set_reminder", "list_schedules", "morning_briefing", "show_dashboard",
+                "continue_work", "recall_last_work", "apply_job_email", "send_email",
+                "notepad_dictate_save", "repeat_typing", "build_website",
+                "generate_code", "analyze_screen", "emotional_support", "start_pomodoro"
+            }
+            if _nlu_intents and any(i.name in _jarvis_intents for i in _nlu_intents):
+                get_dispatcher().dispatch_command(command, speaker_func=speak)
+                continue
+        except Exception as _e:
+            print(f"[JARVIS Dispatcher Notice]: {_e}")
+
+        # -----------------------------
         # SYSTEM CONTROL, HARDWARE DIAGNOSTICS & APP INSTALLER
         # -----------------------------
         if match_command(command, {
-            "ram", "memory status", "memory usage", "cpu", "processor",
+            "ram", "ram status", "ராம்", "ரேம்", "memory status", "memory usage", "cpu", "processor", "சிபியு",
             "disk space", "storage space", "free space", "system summary", "specs",
             "battery", "power status", "decrease the brightness", "refresh pc", "display settings",
             "start menu", "shutdown", "network settings", "network and internet", "network", "internet",
@@ -277,6 +345,75 @@ def kamachi_3_0():
             voice_metal_control(command)
 
         # -----------------------------
+        # WEBSITE BUILDER & VERCEL HOSTING
+        # -----------------------------
+        elif match_command(command, {
+            "write code web site", "website for online shop", "host in vercel",
+            "build website", "create online shop", "online shop website", "deploy to vercel"
+        }):
+            try:
+                from ai.website_builder import get_website_builder
+                get_website_builder().handle_command(command)
+            except Exception as e:
+                speak(f"Website builder error: {str(e)}")
+
+        # -----------------------------
+        # WHATSAPP AUTOMATION
+        # -----------------------------
+        elif "whatsapp" in command.lower() or any(k in command.lower() for k in ["open whatsapp", "send whatsapp", "whatsapp chat"]):
+            try:
+                from communication.whatsapp_controller import get_whatsapp_controller
+                get_whatsapp_controller().handle_command(command)
+            except Exception as e:
+                speak(f"WhatsApp error: {str(e)}")
+
+        # -----------------------------
+        # EMAIL & JOB APPLICATION
+        # -----------------------------
+        elif match_command(command, {
+            "write a mail", "apply a job", "apply for a job", "send mail", "send email", "open mail"
+        }) or "@" in command:
+            try:
+                from communication.email_controller import get_email_controller
+                get_email_controller().handle_command(command)
+            except Exception as e:
+                speak(f"Email error: {str(e)}")
+
+        # -----------------------------
+        # DAILY AUTOMATIONS & SCHEDULER
+        # -----------------------------
+        elif match_command(command, {
+            "every morning", "every day", "remind me in", "scheduled tasks", "list scheduled", "my reminders"
+        }):
+            try:
+                from automation.scheduler import handle_automation_command
+                handle_automation_command(command)
+            except Exception as e:
+                speak(f"Automation error: {str(e)}")
+
+        # -----------------------------
+        # NOTEPAD VOICE DICTATION & AUTO-SAVE
+        # -----------------------------
+        elif "notepad" in command.lower() and any(k in command.lower() for k in ["type", "save", "write"]):
+            try:
+                from system_Control.app_adapters.office_adapter import get_office_adapter
+                get_office_adapter().handle_command(command)
+            except Exception as e:
+                speak(f"Notepad automation error: {str(e)}")
+
+        # -----------------------------
+        # MEMORY & WORK CONTINUATION (VS CODE)
+        # -----------------------------
+        elif match_command(command, {
+            "last work file", "continue the work", "last file in vs code", "open last work", "what was i working on"
+        }):
+            try:
+                from memory.memory_store import handle_memory_command
+                handle_memory_command(command)
+            except Exception as e:
+                speak(f"Memory error: {str(e)}")
+
+        # -----------------------------
         # APP & STORAGE / ONEDRIVE CONTROL
         # -----------------------------
         elif match_command(command, {
@@ -318,8 +455,20 @@ def kamachi_3_0():
         # -----------------------------
         elif match_command(command, {"alarm"}):
             voice_alarm_control(command)
-            
-        elif match_command(command, {"change voice"}):
+
+        # -----------------------------
+        # VOICE CUSTOMIZATION (VOICE, SPEED, VOLUME, PERSONAS)
+        # -----------------------------
+        elif match_command(command, {
+            "change voice", "switch voice", "voice change", "different voice",
+            "male voice", "female voice", "lady voice", "man voice", "woman voice", "boy voice",
+            "speak faster", "speak slower", "speed up", "slow down", "speech rate",
+            "voice speed", "voice rate", "volume up", "volume down", "speech volume",
+            "louder", "softer", "list voices", "show voices", "available voices", "what voices",
+            "voice settings", "voice status", "current voice", "reset voice",
+            "voice persona", "persona jarvis", "persona zen", "persona fast",
+            "vegama pesu", "medhuva pesu", "ponnu voice", "aan voice", "sathama pesu", "satham kora"
+        }):
             change_voice(command)
 
         # -----------------------------
@@ -331,9 +480,15 @@ def kamachi_3_0():
             "what language", "identify language", "which language is this",
             "list languages", "show languages", "supported languages",
             "available languages", "current language", "your language",
-            "batch translate", "multiple translate"
+            "batch translate", "multiple translate",
+            "tamil la pesu", "tamilku mathu", "thamizh la pesu", "mozhi mathu",
+            "english la pesu", "hindi la pesu", "how to say in tamil", "how to say in hindi"
         }):
-            language_features(command)
+            try:
+                from voice.multi_language import handle_language_command
+                handle_language_command(command, speaker_func=speak)
+            except Exception:
+                language_features(command)
 
         # -----------------------------
         # BATTERY & RAM STATUS
@@ -342,6 +497,15 @@ def kamachi_3_0():
             battery_status()
         elif match_command(command, {"ram", "ram status", "ram usage", "memory usage", "memory status"}):
             ram_status()
+
+        # -----------------------------
+        # PAYMENT GATEWAY (YOUPI PG)
+        # -----------------------------
+        elif match_command(command, {
+            "payment", "make a payment", "make payment", "pay", "send payment",
+            "upi payment", "create payment", "payment status", "check payment", "verify payment"
+        }):
+            voice_payment_control(command)
 
         # -----------------------------
         # DEFAULT / CHAT MODE

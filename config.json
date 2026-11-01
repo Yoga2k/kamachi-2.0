@@ -3,11 +3,18 @@
   "assistant_name": "KAMACHI",
   "version": "3.0",
   "default_call_contact": "Amma",
-  "weather_city": "Gudiyatham, Vellore",
-  "speech_rate": 119,
+  "weather_city": "current_location",
+  "speech_rate": 135,
   "speech_volume": 1.0,
+  "voice_name": "ta-IN-PallaviNeural (Tuned Natural Female)",
+  "voice_index": 2,
+  "voice_gender": "female",
+  "voice_persona": "friendly_assistant",
   "default_input_mode": "voice",
-  "default_language": "en",
-  "gemini_api_key": "",
-  "enable_companion_avatar": true
-}
+  "local_llm_engine": "gguf",
+  "default_language": "ta",
+  "enable_companion_avatar": true,
+  "mic_energy_threshold": 300,
+  "stt_language": "ta-IN",
+  "gemini_api_key": ""
+}

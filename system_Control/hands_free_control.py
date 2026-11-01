@@ -241,16 +241,15 @@ def handle_window_and_browser(cmd):
     # Direct URL navigation: "go to <url/site>"
     if cmd.startswith("go to "):
         target = cmd.replace("go to ", "").strip()
-        # Focus address bar in any active browser, type URL and press Enter
-        pyautogui.hotkey('ctrl', 'l')
-        time.sleep(0.15)
+        # If it contains search / trending / videos, pass to web search handlers
+        if any(w in target for w in ["find", "search", "trending", "video", "news", "weather", "online"]):
+            return False
+        import webbrowser
         if not target.startswith("http") and not ("." in target):
             target = f"https://www.{target}.com"
         elif not target.startswith("http"):
             target = f"https://{target}"
-        pyperclip.copy(target)
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('enter')
+        webbrowser.open(target)
         speak(f"Navigating to {target}")
         return True
 

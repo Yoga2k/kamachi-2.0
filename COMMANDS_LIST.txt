@@ -1,0 +1,159 @@
+========================================================================================
+                      KAMACHI 2.0 — VOICE & TEXT COMMANDS CHEAT SHEET
+                     (Unga Computer-kku Neenga Kudaikka Vendiya Commands)
+========================================================================================
+
+Intha text file-il ulla commands-ai neenga direct-ah KAMACHI 2.0-kitta mic vazhiyaaga
+pesalaam (Voice Command) allathu type panni kooda execute pannalaam.
+
+Ellaa commands-um 100% Offline, Fast-aaga mathum Error-free-aaga work aagumpadi
+configure seyyappattullathu.
+
+----------------------------------------------------------------------------------------
+1. SYSTEM & HARDWARE CONTROLS (System Status & Settings)
+----------------------------------------------------------------------------------------
+Command (English / Tanglish)             | Enna Pannum (Action)
+-----------------------------------------+----------------------------------------------
+ram status / ram usage                   | RAM evalo use aaguthu nu sollum
+cpu status / cpu usage                   | Processor / CPU load percentage sollum
+battery / battery status                 | Battery percentage mathum charger status sollum
+disk space / storage space               | Hard disk C: drive free space sollum
+pc specs / system summary / about pc     | System full configuration details sollum
+increase volume / decrease volume        | Sound volume athigam / kuraikka
+increase brightness / decrease brightness| Screen brightness athigam / kuraikka
+dark mode / light mode                   | Windows dark / light mode settings
+display settings                         | Windows display settings open pannum
+wifi settings / network settings         | Wi-Fi & Internet settings open pannum
+bluetooth settings                       | Bluetooth settings open pannum
+task manager                             | Task Manager open pannum
+device manager                           | Device Manager open pannum
+scan virus / antivirus                   | Windows Defender virus scan start pannum
+refresh pc                               | Windows desktop refresh pannum
+
+----------------------------------------------------------------------------------------
+2. APPS & FOLDER CONTROLS (Open, Close & Access)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+open notepad / close notepad             | Notepad open / close pannum
+open chrome / close chrome               | Google Chrome browser open / close pannum
+open vs code / open code                 | Visual Studio Code open pannum
+open calculator / close calculator       | Calculator open / close pannum
+open paint                               | Paint app open pannum
+open terminal / open powershell          | Windows Terminal / PowerShell open pannum
+open cmd                                 | Command Prompt open pannum
+open spotify / open vlc                  | Music / Video player open pannum
+open word / open excel                   | MS Word / MS Excel open pannum
+open file explorer                       | File Explorer open pannum
+open downloads                           | Downloads folder open pannum
+open documents                           | Documents folder open pannum
+open pictures / open desktop             | Pictures / Desktop folder open pannum
+close window / close current tab         | Current window / tab-ai close pannum
+
+----------------------------------------------------------------------------------------
+3. WEB, SEARCH & WEATHER (Online Information)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+search google for <query>                | Google-il search panni browser open pannum
+  * Example: search google for python tutorials
+  * Example: search google for latest ai news
+search youtube for <query>               | YouTube-il search panni video play pannum
+  * Example: search youtube for csk match highlights
+  * Example: search youtube for ilayaraja songs
+weather in <city>                        | Ketta ooru-oda live weather & temp sollum
+  * Example: weather in chennai
+  * Example: weather in madurai
+current weather / today weather          | Unga current location-oda weather sollum
+where am i / my location                 | Unga current city & location details sollum
+
+----------------------------------------------------------------------------------------
+4. MATHEMATICS & NUMERICAL CALCULATIONS (Instant Calculations)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+what is 150 + 250                        | Addition (Kootal)
+500 minus 125                            | Subtraction (Kazhithal)
+what is 45 * 8                           | Multiplication (Perukkal)
+1000 divided by 25                       | Division (Vaguthal)
+square root of 144                       | Vargamoolam (Ans: 12)
+table of 7 / multiplication table 9      | Vaipadu / Math tables sollum
+average of 10 20 30 40 50                | Average (Sarari) kanakkidum
+percentage of 40 in 200                  | Percentage kanakkidum (Ans: 20%)
+lcm of 12 and 18                         | LCM kanakkidum
+hcf of 24 and 36                         | HCF kanakkidum
+
+----------------------------------------------------------------------------------------
+5. WHATSAPP & COMMUNICATION AUTOMATION (Hands-free Messaging)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+send whatsapp to amma                    | Amma contact search panni message anuppum
+send whatsapp to kamal                   | Kamal-ku WhatsApp message compose pannum
+amma ku whatsapp la good morning anupu   | Tanglish command: WhatsApp-il GM send pannum
+open whatsapp                            | WhatsApp desktop app open pannum
+send email to manager@test.com           | Email draft seithu send pannum
+write a mail to hr                       | HR-ku job application mail template eluthum
+
+----------------------------------------------------------------------------------------
+6. REMINDERS, SCHEDULING & TIME MANAGEMENT (Life Assistant)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+remind me in 10 minutes to take a break  | 10 minutes-il break reminder set pannum
+remind me in 30 minutes to drink water   | 30 minutes-il reminder sound + alert tharum
+list scheduled tasks / my reminders      | Active-ah irukra ellaa reminders-aiyum kaatum
+start pomodoro timer                     | 25-minute focus work pomodoro timer start
+stop pomodoro                            | Running pomodoro timer stop pannum
+
+----------------------------------------------------------------------------------------
+7. PROACTIVE BRIEFING & VISUAL HUD (JARVIS Experience)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+morning briefing / daily briefing        | Time, battery, RAM, unga last work pathi
+                                         | JARVIS style-il full voice briefing tharum
+show dashboard / hud status              | Desktop-il visual JARVIS dashboard open pannum
+
+----------------------------------------------------------------------------------------
+8. CODING, DEVELOPMENT & MEMORY (Programmer Companion)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+write a python script for fibonacci      | Python code automatic-a generate panni tharum
+generate code for binary search          | Binary search algorithm code generate pannum
+build website for online shop            | Full responsive HTML/CSS/JS website create pannum
+what was i working on                    | VS Code-il kadaisiyaaga entha project / file-il
+                                         | work panneenga nu memory recall pannum
+open last work / continue the work       | Kadaisiyaaga work panna file-ai VS Code-il open pannum
+
+----------------------------------------------------------------------------------------
+9. CONVERSATIONAL AI & GENERAL KNOWLEDGE (Smart Offline Brain)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+what is quantum computing                | Concise explanation voice-il sollum
+who is apj abdul kalam                   | Abdul Kalam pathi brief summary sollum
+explain artificial intelligence          | AI pathi easy-ah explain pannum
+who are you / what is your name          | KAMACHI 2.0 pathi introduce pannikkum
+who created you                          | Mr. Yoga uruvaakkiyathu pathi sollum
+what can you do / help                   | Ella capabilities pathi brief-ah sollum
+tell me a joke / say a joke              | Nalla funny-aana tech joke sollum
+
+----------------------------------------------------------------------------------------
+10. LANGUAGE, VOICE & EMOTIONAL SUPPORT (Tanglish & Customization)
+----------------------------------------------------------------------------------------
+Command                                  | Action
+-----------------------------------------+----------------------------------------------
+tamil la pesu                            | Tamil mozhikku switch pannum
+english la pesu                          | English mozhikku switch pannum
+speak faster / vegama pesu               | Voice speed athigarippu
+speak slower / medhuva pesu              | Voice speed kuraithal
+change voice / switch voice to female    | Voice type change pannum
+romba tired ah iruku                     | Friendly emotional support & motivation tharum
+i am feeling very stressed today         | Stress relief tips & encouraging words sollum
+
+========================================================================================
+                                     END OF CHEAT SHEET
+========================================================================================
+

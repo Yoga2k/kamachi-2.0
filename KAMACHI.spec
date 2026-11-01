@@ -6,10 +6,13 @@ block_cipher = None
 
 datas = [
     ('assets', 'assets'),
+    ('storage', 'storage'),
+    ('plugins', 'plugins'),
 ]
 
-if os.path.exists('notes.txt'):
-    datas.append(('notes.txt', '.'))
+for extra_file in ['notes.txt', 'config.json', 'COMMANDS_LIST.txt', 'VERSION']:
+    if os.path.exists(extra_file):
+        datas.append((extra_file, '.'))
 
 hiddenimports = [
     'pyttsx3.drivers',
@@ -25,6 +28,8 @@ hiddenimports = [
     'screen_brightness_control',
     'psutil',
     'pyautogui',
+    'PIL',
+    'PIL.ImageGrab',
     'plyer',
     'plyer.platforms.win.notification',
     'pywinauto',
@@ -37,6 +42,54 @@ hiddenimports = [
     'win32gui',
     'win32con',
     'win32process',
+    # --- Kamachi 2.0 Core & Modular Subsystems ---
+    'core',
+    'core.intent',
+    'core.context_manager',
+    'core.intent_registry',
+    'core.nlu_engine',
+    'core.command_dispatcher',
+    'core.event_bus',
+    'core.plugin_loader',
+    'core.safety',
+    'voice',
+    'voice.tts_engine',
+    'voice.stt_engine',
+    'voice.voice_customizer',
+    'voice.multi_language',
+    'voice.wake_word',
+    'voice.noise_filter',
+    'communication',
+    'communication.contact_book',
+    'communication.whatsapp_controller',
+    'communication.email_controller',
+    'automation',
+    'automation.scheduler',
+    'automation.proactive_agent',
+    'memory',
+    'memory.memory_store',
+    'memory.user_preferences',
+    'ai',
+    'ai.gemini_client',
+    'ai.code_generator',
+    'ai.website_builder',
+    'ai.autonomous_agent',
+    'ai.emotional_ai',
+    'ai.local_llm',
+    'ai.gguf_runner',
+    'ai.rag_engine',
+    'voice.sister_tts',
+    'vision',
+    'vision.screen_agent',
+    'ui',
+    'ui.avatar_widget',
+    'ui.notification_toast',
+    'ui.dashboard_widget',
+    'ui.sound_effects',
+    'system_Control.app_adapters',
+    'system_Control.app_adapters.office_adapter',
+    'system_Control.omni_driver',
+    # --- Legacy Subsystems ---
     'Education',
     'Education.coding_assist',
     'Education.social',
@@ -94,13 +147,11 @@ a = Analysis(
         'tensorflow',
         'torch',
         'scipy',
-        'sympy',
         'cv2',
         'pandas',
         'IPython',
         'notebook',
         'pytest',
-        'unittest',
         'numpy',
     ],
     win_no_prefer_redirects=False,
@@ -111,7 +162,6 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-# --- ONEDIR mode: produces dist/KAMACHI/ folder ---
 exe = EXE(
     pyz,
     a.scripts,

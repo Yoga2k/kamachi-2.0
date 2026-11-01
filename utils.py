@@ -28,15 +28,20 @@ except Exception:
     CONFIG_SPEECH_RATE = 150
     CONFIG_SPEECH_VOLUME = 1.0
 
-# Initialize pyttsx3 engine
-engine = pyttsx3.init()
-engine.setProperty('rate', CONFIG_SPEECH_RATE)
-engine.setProperty('volume', CONFIG_SPEECH_VOLUME)
-voices = engine.getProperty('voices')
+# Initialize pyttsx3 engine safely
+engine = None
+voices = []
 current_voice_index = 0
-
-if voices:
-    engine.setProperty('voice', voices[0].id)
+try:
+    engine = pyttsx3.init()
+    engine.setProperty('rate', CONFIG_SPEECH_RATE)
+    engine.setProperty('volume', CONFIG_SPEECH_VOLUME)
+    voices = engine.getProperty('voices') or []
+    if voices:
+        engine.setProperty('voice', voices[0].id)
+except Exception:
+    engine = None
+    voices = []
 
 # Initialize persistent Windows SAPI speaker
 _sapi_speaker = None
@@ -61,6 +66,16 @@ def speak(text):
     if _HAS_AVATAR_UI:
         avatar_ui.notify_status("speaking")
         avatar_ui.notify_ai_said(text)
+
+    # --- 1. Natural Sister Voice Engine (Zero API Key, Tuned Neural + Real Audio Clips) ---
+    try:
+        from voice.sister_tts import speak_sister_voice
+        if speak_sister_voice(text):
+            if _HAS_AVATAR_UI:
+                avatar_ui.notify_status("idle")
+            return
+    except Exception:
+        pass
 
     # --- Windows persistent win32com SAPI method ---
     if _sapi_speaker is not None:
@@ -106,9 +121,30 @@ def speak(text):
 
 
 # ------------------------------------------------------------
-# VOICE LISTING AND SWITCHING
+# VOICE CUSTOMIZATION INTEGRATION
 # ------------------------------------------------------------
+try:
+    from voice.voice_customizer import (
+        get_voice_customizer,
+        handle_voice_customization,
+        is_voice_command
+    )
+    _voice_customizer = get_voice_customizer()
+except Exception:
+    _voice_customizer = None
+    handle_voice_customization = None
+    is_voice_command = None
+
+
 def list_voices():
+    """List all available system voices with details."""
+    if _voice_customizer is not None:
+        lines = _voice_customizer.list_voices_formatted()
+        print("\nAvailable Voices:")
+        for line in lines:
+            print(line)
+        return [v.name for v in _voice_customizer.voices]
+
     print("\nAvailable Voices:")
     available = []
     if _sapi_speaker is not None:
@@ -130,19 +166,30 @@ def list_voices():
 
 def change_voice(command):
     """
-    Change voice across both SAPI and pyttsx3 engines (e.g. 'change voice 2').
+    Full voice customization handler:
+    Supports:
+      - Male / Female voices ("switch to female voice", "change to male voice")
+      - Number selection ("change voice 2")
+      - Speed / Rate ("speak faster", "speak slower", "set speed to 150")
+      - Volume ("volume up", "volume down", "set volume to 80%")
+      - Personas ("persona jarvis", "persona zen")
+      - Status ("voice settings", "current voice")
     """
+    if handle_voice_customization is not None:
+        handle_voice_customization(command, speaker_func=speak)
+        return
+
+    # Fallback to legacy index switching
     global current_voice_index
     try:
         numbers = [int(s) for s in command.split() if s.isdigit()]
         if not numbers:
-            speak("Please specify a voice number. For example, say 'change voice 2'.")
+            speak("Please specify a voice number or say switch to male or female voice.")
             return
 
         index = numbers[0] - 1
         voice_name = None
 
-        # Switch SAPI voice if available
         if _sapi_speaker is not None:
             try:
                 sapi_voices = _sapi_speaker.GetVoices()
@@ -153,7 +200,6 @@ def change_voice(command):
             except Exception:
                 pass
 
-        # Switch pyttsx3 voice as well
         if 0 <= index < len(voices):
             engine.setProperty('voice', voices[index].id)
             if not voice_name:
@@ -166,6 +212,7 @@ def change_voice(command):
             speak("Invalid voice number. Say 'change voice' followed by a valid number.")
     except Exception:
         speak("Sorry, I couldn't change the voice.")
+
 
 
 # ------------------------------------------------------------
@@ -243,11 +290,44 @@ def choose_input_mode():
 
 
 # ------------------------------------------------------------
+# HIGH-SPEED PERSISTENT SPEECH RECOGNIZER
+# ------------------------------------------------------------
+_persistent_recognizer = sr.Recognizer()
+# High-speed responsive listening parameters (removes ~0.8s dead silence wait)
+_persistent_recognizer.pause_threshold = 0.5
+_persistent_recognizer.non_speaking_duration = 0.3
+_persistent_recognizer.phrase_threshold = 0.2
+try:
+    import config
+    _cfg_thresh = int(config.get_config("mic_energy_threshold", 300))
+    _persistent_recognizer.energy_threshold = _cfg_thresh
+except Exception:
+    _persistent_recognizer.energy_threshold = 300
+_persistent_recognizer.dynamic_energy_threshold = False
+_mic_calibrated = False
+
+
+def calibrate_microphone(duration=0.5):
+    """Calibrate microphone for ambient noise once at startup (0ms delay on subsequent calls)."""
+    global _mic_calibrated
+    if _mic_calibrated:
+        return
+    try:
+        with sr.Microphone() as source:
+            print("Calibrating microphone for ambient noise...")
+            _persistent_recognizer.adjust_for_ambient_noise(source, duration=duration)
+            _mic_calibrated = True
+            print(f"Microphone ready (Energy threshold: {_persistent_recognizer.energy_threshold:.1f})")
+    except Exception as e:
+        print(f"Microphone calibration note: {e}")
+
+
+# ------------------------------------------------------------
 # MAIN SPEECH RECOGNITION FUNCTION
 # ------------------------------------------------------------
-def take_command(prompt=None, max_retries=3):
+def take_command(prompt=None, max_retries=3, language=None):
     """
-    Listen and recognize speech.
+    Listen and recognize speech across multiple languages (Tamil, English, Hindi, etc.).
     Automatically switches to typed input if TEMP_TYPED_INPUT is True.
     """
     if TEMP_TYPED_INPUT:
@@ -256,8 +336,19 @@ def take_command(prompt=None, max_retries=3):
     if _HAS_AVATAR_UI:
         avatar_ui.notify_status("listening")
 
-    recognizer = sr.Recognizer()
-    recognizer.energy_threshold = 300
+    # Determine STT recognition language
+    stt_lang = language
+    if not stt_lang:
+        try:
+            from voice.multi_language import get_multi_language_manager
+            stt_lang = get_multi_language_manager().current_stt_code
+        except Exception:
+            stt_lang = "en-IN"
+
+    global _mic_calibrated
+    recognizer = _persistent_recognizer
+    if not _mic_calibrated:
+        calibrate_microphone(duration=0.5)
 
     if prompt:
         speak(prompt)
@@ -266,16 +357,29 @@ def take_command(prompt=None, max_retries=3):
 
     try:
         with sr.Microphone() as source:
-            print("Listening...")
-            recognizer.adjust_for_ambient_noise(source, duration=1)
+            print(f"Listening... [{stt_lang}]")
 
             retries = 0
             while retries < max_retries:
                 try:
-                    audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
+                    audio = recognizer.listen(source, timeout=4, phrase_time_limit=8)
                     print("Recognizing...")
-                    command = recognizer.recognize_google(audio).lower()
+                    try:
+                        command = recognizer.recognize_google(audio, language=stt_lang).lower()
+                    except sr.UnknownValueError:
+                        # Seamless dual-language fallback: if en-IN fails, try ta-IN; if ta-IN fails, try en-IN
+                        alt_lang = "ta-IN" if stt_lang != "ta-IN" else "en-IN"
+                        command = recognizer.recognize_google(audio, language=alt_lang).lower()
+
                     print(f"You said: {command}")
+                    try:
+                        from voice.multi_language import normalize_spoken_command
+                        norm_cmd = normalize_spoken_command(command)
+                        if norm_cmd and norm_cmd != command:
+                            print(f"Normalized: {norm_cmd}")
+                            command = norm_cmd
+                    except Exception:
+                        pass
                     if _HAS_AVATAR_UI:
                         avatar_ui.notify_user_said(command)
                         avatar_ui.notify_status("idle")
@@ -288,7 +392,6 @@ def take_command(prompt=None, max_retries=3):
                         avatar_ui.notify_status("listening")
                 except sr.WaitTimeoutError:
                     retries += 1
-                    # Ambient silence is normal — keep listening silently
                     if prompt and retries >= max_retries:
                         speak("Listening timed out.")
                     if _HAS_AVATAR_UI:
